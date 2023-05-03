@@ -6,6 +6,8 @@ namespace TC {
     
     namespace Geo {
 
+        const double earth_radius = 6371000;
+
         struct Coordinates {
             double lat;
             double lng;
