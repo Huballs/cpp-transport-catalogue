@@ -30,6 +30,7 @@ add_executable(bus-manager transport-catalogue/main.cpp
     transport-catalogue/input_reader.cpp
     transport-catalogue/stat_reader.cpp
     transport-catalogue/transport_catalogue.cpp
+    transport-catalogue/json.cpp
 )
 
 #target_link_libraries(search-server PRIVATE TBB::tbb)
