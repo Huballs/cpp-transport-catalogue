@@ -2,7 +2,16 @@
 
 #include <istream>
 #include "json.h"
+#include "transport_catalogue.h"
 
-auto LoadJson(std::istream& stream){
-    return json::Load(stream);
-}
+namespace TC {
+
+    namespace Input{
+
+        namespace Json {
+
+            void Reader(TransportCatalogue& catalogue, std::istream& input);
+        }
+
+    } // namespace JsonReader
+} // namespace TC

@@ -20,17 +20,8 @@ int main() {
     if(!in.is_open())
         std::cout << "failed to open" << std::endl;
 
-    auto doc = LoadJson(in);
-
-    doc.GetRoot().AsArray()
-
-    std::string line;
-    std::string text;
-    while(std::getline(in, line)){
-        text += line + '\n';
-    }
-
-    std::cout << text << std::endl;
+    TC::Input::Json::Reader(catalogue, in);
+    std::cout << "OK" << std::endl;
 
     return 0;
 }
