@@ -23,17 +23,24 @@ class RequestHandler {
 
             std::unordered_map<std::string_view, uint32_t> road_distances;
 
-            bool operator>(const base_request_t& other) const {
-                return (type > other.type) || (name < other.name);
-            }
+        };
+
+        struct stat_request_t {
+            int id;
+            std::string_view type;
+            std::string_view name;
         };
 
         // MapRenderer понадобится в следующей части итогового проекта
         //RequestHandler(const TransportCatalogue& db, const renderer::MapRenderer& renderer);
-        RequestHandler(const TransportCatalogue& db) : db_(db){};
+        RequestHandler(TransportCatalogue& db) : db_(db){};
 
-        /* stores request for later fulfillment - stops first, as required by transport catalogue */
+        /* stores request for later fulfillment*/
         void QueueRequest(base_request_t& request);
+        void QueueRequest(stat_request_t& request);
+
+        /* makes requests to tc in order: add stops, add busses, stat requests */
+        void FulfillRequests();
 
         // Возвращает информацию о маршруте (запрос Bus)
         //std::optional<BusStat> GetBusStat(const std::string_view& bus_name) const;
@@ -46,10 +53,13 @@ class RequestHandler {
 
     private:
 
-        std::set<base_request_t, std::greater<base_request_t>> request_queue_; // needs to be sorted - stops first
+        std::vector<base_request_t> requests_add_stop;
+        std::vector<base_request_t> requests_add_bus;
+
+        std::vector<stat_request_t> requests_stat;
 
         // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
-        const TransportCatalogue& db_;
+        TransportCatalogue& db_;
         //const renderer::MapRenderer& renderer_;
     };
 } // namespace TC

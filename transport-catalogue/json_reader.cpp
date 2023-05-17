@@ -8,17 +8,18 @@ void TC::Input::Json::Reader(TransportCatalogue& catalogue, std::istream& input)
     if(!document.GetRoot().IsMap())
         throw json::ParsingError("Json::reader top level parsing error");
 
-    auto requests = document.GetRoot().AsMap().find("base_requests");
-
-    if(!requests->second.IsArray())
-        throw json::ParsingError("Json::reader second level parsing error");
-
     RequestHandler request_handler(catalogue);
 
-    for(const auto& request : requests->second.AsArray()){
+    // -- base requests --
+    const auto& base_requests = document.GetRoot().AsMap().find("base_requests")->second;
+
+    if(!base_requests.IsArray())
+        throw json::ParsingError("Json::reader second level base parsing error");
+
+    for(const auto& request : base_requests.AsArray()){
 
         if(!request.IsMap())
-            throw json::ParsingError("Json::reader bottom level parsing error");
+            throw json::ParsingError("Json::reader bottom level base parsing error");
         
         RequestHandler::base_request_t base_request;
 
@@ -48,4 +49,30 @@ void TC::Input::Json::Reader(TransportCatalogue& catalogue, std::istream& input)
         request_handler.QueueRequest(base_request);
 
     }
+    // -- --
+    // -- stat requests
+    const auto&  stat_requests = document.GetRoot().AsMap().find("stat_requests")->second;
+
+    if(!stat_requests.IsArray())
+        throw json::ParsingError("Json::reader second level stat parsing error");
+
+    for(const auto& request : stat_requests.AsArray()){
+
+        if(!request.IsMap())
+            throw json::ParsingError("Json::reader bottom level stat parsing error");
+        
+        RequestHandler::stat_request_t stat_request;
+
+        const auto& request_map = request.AsMap();
+
+        stat_request.id = request_map.at("id").AsInt();
+        stat_request.type = request_map.at("type").AsString();
+        stat_request.name = request_map.at("name").AsString();
+
+        request_handler.QueueRequest(stat_request);
+
+    }
+    // -- --
+
+    request_handler.FulfillRequests();
 }
