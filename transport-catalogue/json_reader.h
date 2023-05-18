@@ -21,6 +21,10 @@ namespace TC {
             void ReadStatRequests(RequestHandler& request_handler, const json::Document& document, std::ostream& output);
 
             Renderer::map_settings_t ReadMapRenderSettings(const json::Document& document);
+
+            namespace detail {
+                svg::Color NodeToSvgColor(const json::Node& node);
+            }
         }
 
     } // namespace JsonReader

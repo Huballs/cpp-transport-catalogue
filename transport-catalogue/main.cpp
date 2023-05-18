@@ -1,4 +1,3 @@
-#include "geo.h"
 #include "stat_reader.h"
 #include "transport_catalogue.h"
 #include "json_reader.h"
@@ -23,6 +22,8 @@ int main() {
     const auto document =  TC::Input::Json::Reader(request_handler, in);
 
     TC::Input::Json::ReadStatRequests(request_handler, document, std::cout);
+
+    auto MapRenderSettings = TC::Input::Json::ReadMapRenderSettings(document);
 
     //TC::Input::Json::Reader(catalogue, std::cin, std::cout);
 
