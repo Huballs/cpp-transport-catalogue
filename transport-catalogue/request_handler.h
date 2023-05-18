@@ -25,28 +25,39 @@ class RequestHandler {
 
         };
 
-        struct stat_request_t {
-            int id;
-            std::string_view type;
-            std::string_view name;
+        struct stat_bus_t{
+
+            double curvature;
+            uint32_t length;
+            int stop_count;
+            int unique_stop_count;
+
+        };
+
+        struct stat_stop_t{
+
+            const std::set<std::string_view>& buses;
+            
         };
 
         // MapRenderer понадобится в следующей части итогового проекта
         //RequestHandler(const TransportCatalogue& db, const renderer::MapRenderer& renderer);
         RequestHandler(TransportCatalogue& db) : db_(db){};
 
-        /* stores request for later fulfillment*/
-        void QueueRequest(base_request_t& request);
-        void QueueRequest(stat_request_t& request);
+        /* stores add request for later fulfillment */
+        void QueueAddRequest(base_request_t& request);
 
-        /* makes requests to tc in order: add stops, add busses, stat requests */
-        void FulfillRequests();
+        /* makes requests to tc in order: add stops, add busses if any*/
+        void FulfillAddRequests();
 
         // Возвращает информацию о маршруте (запрос Bus)
-        //std::optional<BusStat> GetBusStat(const std::string_view& bus_name) const;
+        std::optional<stat_bus_t> GetBusStat(const std::string_view& bus_name) const;
+        
+        // Возвращает информацию о маршруте (запрос Stop)
+        std::optional<stat_stop_t> GetStopStat(const std::string_view& stop_name) const;
 
         // Возвращает маршруты, проходящие через
-        const std::unordered_set<Bus*>* GetBusesByStop(const std::string_view& stop_name) const;
+        //const std::unordered_set<Bus*>* GetBusesByStop(const std::string_view& stop_name) const;
 
         // Этот метод будет нужен в следующей части итогового проекта
         //svg::Document RenderMap() const;
@@ -55,8 +66,6 @@ class RequestHandler {
 
         std::vector<base_request_t> requests_add_stop;
         std::vector<base_request_t> requests_add_bus;
-
-        std::vector<stat_request_t> requests_stat;
 
         // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
         TransportCatalogue& db_;

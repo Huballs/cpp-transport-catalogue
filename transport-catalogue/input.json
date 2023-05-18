@@ -1,13 +1,16 @@
 {
     "base_requests": [
       {
-        "type": "Bus",
+        "type":    
+        
+        "Bus",
         "name": "114",
         "stops": ["Морской вокзал", "Ривьерский мост"],
         "is_roundtrip": false
       },
       {
-        "type": "Stop",
+        "type": 
+         "Stop",
         "name": "Ривьерский мост",
         "latitude": 43.587795,
         "longitude": 39.716901,

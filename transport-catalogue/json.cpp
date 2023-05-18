@@ -237,6 +237,9 @@ Node::Node(bool value) : value_(value) {
 Node::Node(int value) : value_(value) {
 }
 
+Node::Node(uint32_t value) : value_(value) {
+}
+
 Node::Node(double value) : value_(value) {
 }
 
@@ -253,6 +256,9 @@ Node::Node(const Dict &value) : value_(move(value)){
 
 bool Node::IsInt() const {
     return (std::get_if<int>(&value_) != nullptr);
+}
+bool Node::IsUInt() const {
+    return (std::get_if<uint32_t>(&value_) != nullptr);
 }
 bool Node::IsDouble() const{      // Возвращает true, если в Node хранится int либо double.
     return IsInt() || IsPureDouble();
@@ -402,6 +408,10 @@ void PrintValue(const string &value, std::ostream& out) {
 }
 
 void PrintValue(int value, std::ostream &out){
+    out << value;
+}
+
+void PrintValue(uint32_t value, std::ostream &out){
     out << value;
 }
 

@@ -22,13 +22,14 @@ public:
 
 class Node {
 public:
-    using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
+    using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, uint32_t, double, std::string>;
 
     Node() = default;
 
     Node(std::nullptr_t value);
     Node(bool value);
     Node(int value);
+    Node(uint32_t value);
     Node(double value);
     Node(const std::string &value);
     Node(const Dict &value);
@@ -45,6 +46,7 @@ public:
     const Value& GetValue() const { return value_; }
 
     bool IsInt() const;
+    bool IsUInt() const;
     bool IsDouble() const;      // Возвращает true, если в Node хранится int либо double.
     bool IsPureDouble() const;  // Возвращает true, если в Node хранится double.
     bool IsBool() const;
@@ -91,6 +93,7 @@ void PrintValue(double value, std::ostream& out);
 void PrintValue(bool value, std::ostream& out);
 void PrintValue(const std::string &value, std::ostream& out);
 void PrintValue(int value, std::ostream &out);
+void PrintValue(uint32_t value, std::ostream &out);
 void PrintValue(const Array &array, std::ostream &out);
 void Print(const Document& doc, std::ostream& output);
 
