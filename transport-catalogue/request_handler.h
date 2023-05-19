@@ -3,6 +3,7 @@
 #include "transport_catalogue.h"
 #include <optional>
 #include <unordered_set>
+#include <map>
 
 namespace TC {
 
@@ -60,6 +61,8 @@ class RequestHandler {
 
         Geo::Coordinates GetMinCoordinates() const;
         Geo::Coordinates GetMaxCoordinates() const;
+
+        std::map<std::string_view, const Bus*> GetBusMapAscendingName() const;
 
         // Возвращает маршруты, проходящие через
         //const std::unordered_set<Bus*>* GetBusesByStop(const std::string_view& stop_name) const;

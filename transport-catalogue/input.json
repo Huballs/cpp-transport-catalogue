@@ -74,7 +74,7 @@
     "height": 400,
     "padding": 50,
     "stop_radius": 5,
-    "line_width": 14,
+    "line_width": 14.3,
     "bus_label_font_size": 20,
     "bus_label_offset": [
       7,

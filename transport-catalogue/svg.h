@@ -101,6 +101,8 @@ protected:
 
         if (fill_color_) {
             out << " fill=\""sv << *fill_color_ << "\""sv;
+        } else {
+            out << " fill=\""sv << "none" << "\""sv;
         }
         if (stroke_color_) {
             out << " stroke=\""sv << *stroke_color_ << "\""sv;
@@ -169,6 +171,7 @@ struct RenderContext {
  */
 class Object {
 public:
+
     void Render(const RenderContext& context) const;
 
     virtual ~Object() = default;
@@ -254,6 +257,8 @@ private:
 
 class ObjectContainer {
 public:
+
+    ObjectContainer() = default;
 
     template <typename Obj>
     void Add(Obj obj) {

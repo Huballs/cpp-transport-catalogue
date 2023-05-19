@@ -9,6 +9,7 @@
 #include <iostream>
 #include <optional>
 #include <vector>
+#include <map>
 
 namespace TC::Renderer {
 
@@ -43,10 +44,13 @@ namespace TC::Renderer {
         MapRenderer(map_settings_t& settings) 
             : settings_(std::move(settings)){};
 
-        svg::Document Render(const RequestHandler& request_handler);
+        void  Render(const RequestHandler& request_handler, std::ostream& output);
 
     private:
-        void DrawRoute(const Bus& bus, svg::Document& document, SphereProjector& projector);
+        void DrawRoute(const Bus& bus, svg::Document& document, SphereProjector& projector, svg::Color color);
+
+        std::vector<Geo::Coordinates> GetUsedCoordinates(const std::map<std::string_view, const TC::Bus *> &buses) const;
+
         map_settings_t settings_;
 
         //std::vector<svg::Polyline> lines_;
@@ -59,40 +63,40 @@ namespace TC::Renderer {
     class SphereProjector {
     public:
         // points_begin и points_end задают начало и конец интервала элементов geo::Coordinates
-        /*template <typename PointInputIt>
+        template <typename PointInputIt>
         SphereProjector(PointInputIt points_begin, PointInputIt points_end,
                         double max_width, double max_height, double padding)
-            : padding_(padding) */
+            : padding_(padding) 
 
         //template <typename PointInputIt>
-        SphereProjector(Geo::Coordinates min_coord, Geo::Coordinates max_coord,
+       /* SphereProjector(Geo::Coordinates min_coord, Geo::Coordinates max_coord,
                         double max_width, double max_height, double padding)
-            : padding_(padding) 
+            : padding_(padding) */
         {
             using namespace detail;
             // Если точки поверхности сферы не заданы, вычислять нечего
-            /*if (points_begin == points_end) {
+            if (points_begin == points_end) {
                 return;
-            }*/
-
+            }
+/*
             min_lon_ = min_coord.lng;
             const double max_lon = max_coord.lng;
 
             max_lat_ = max_coord.lat;
-            const double min_lat = min_coord.lat;
+            const double min_lat = min_coord.lat;*/
             // Находим точки с минимальной и максимальной долготой
-            /*const auto [left_it, right_it] = std::minmax_element(
+            const auto [left_it, right_it] = std::minmax_element(
                 points_begin, points_end,
                 [](auto lhs, auto rhs) { return lhs.lng < rhs.lng; });
             min_lon_ = left_it->lng;
-            const double max_lon = right_it->lng;*/
+            const double max_lon = right_it->lng;
 
             // Находим точки с минимальной и максимальной широтой
-            /*const auto [bottom_it, top_it] = std::minmax_element(
+            const auto [bottom_it, top_it] = std::minmax_element(
                 points_begin, points_end,
                 [](auto lhs, auto rhs) { return lhs.lat < rhs.lat; });
             const double min_lat = bottom_it->lat;
-            max_lat_ = top_it->lat;*/
+            max_lat_ = top_it->lat;
 
             // Вычисляем коэффициент масштабирования вдоль координаты x
             std::optional<double> width_zoom;

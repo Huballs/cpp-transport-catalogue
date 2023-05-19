@@ -53,11 +53,11 @@ void Polyline::RenderObject(const RenderContext& context) const {
         out << point.x << ',' << point.y;
     }
     
-    out << "\" ";
+    out << "\"";
 
     RenderAttrs(out);
 
-    out << " />";
+    out << "/>";
 }
 
 // -------------- Text ----------------

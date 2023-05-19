@@ -60,6 +60,17 @@ namespace TC {
 
     }
 
+    std::map<std::string_view, const Bus*> RequestHandler::GetBusMapAscendingName() const{
+
+        std::map<std::string_view, const Bus*> result;
+
+        for(const auto& bus : db_.GetBuses()){
+            result.insert({bus.GetName(), &bus});
+        }
+
+        return result;
+    }
+
     const std::deque<Bus>& RequestHandler::GetBuses() const{
         return db_.GetBuses();
     }
