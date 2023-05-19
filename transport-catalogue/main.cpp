@@ -25,6 +25,10 @@ int main() {
 
     auto MapRenderSettings = TC::Input::Json::ReadMapRenderSettings(document);
 
+    TC::Renderer::MapRenderer renderer(MapRenderSettings);
+
+    //auto svg_doc = renderer.Render(request_handler);
+    //svg_doc.Render(std::cout);
     //TC::Input::Json::Reader(catalogue, std::cin, std::cout);
 
     return 0;

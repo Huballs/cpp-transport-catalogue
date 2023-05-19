@@ -56,6 +56,11 @@ class RequestHandler {
         // Возвращает информацию о маршруте (запрос Stop)
         std::optional<stat_stop_t> GetStopStat(const std::string_view& stop_name) const;
 
+        const std::deque<Bus>& GetBuses() const;
+
+        Geo::Coordinates GetMinCoordinates() const;
+        Geo::Coordinates GetMaxCoordinates() const;
+
         // Возвращает маршруты, проходящие через
         //const std::unordered_set<Bus*>* GetBusesByStop(const std::string_view& stop_name) const;
 

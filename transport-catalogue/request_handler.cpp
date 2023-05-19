@@ -60,5 +60,17 @@ namespace TC {
 
     }
 
-} // TC::RequestHandler
+    const std::deque<Bus>& RequestHandler::GetBuses() const{
+        return db_.GetBuses();
+    }
+
+    Geo::Coordinates RequestHandler::GetMinCoordinates() const{
+        return db_.GetMinCoordinate();
+    }
+
+    Geo::Coordinates RequestHandler::GetMaxCoordinates() const{
+        return db_.GetMaxCoordinate();
+    }
+
+} // TC
 

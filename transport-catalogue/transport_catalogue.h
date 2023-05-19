@@ -52,6 +52,7 @@ namespace TC {
         int GetStopsCount() const {return stops_count;}
         int GetStopsCountUnique() const {return stops_unique_count;}
         bool IsCircular() const {return isCircle;}
+        const std::deque<Stop*>& GetStops() const {return stops;}
     };
 
     class TransportCatalogue {
@@ -73,6 +74,10 @@ namespace TC {
 
         std::unordered_map<std::pair<Stop*, Stop*>, uint32_t, TwoPointerStopsJasher> stops_distances_;
 
+        void CheckMinMaxCoords(const Coordinates& coordinates);
+        Coordinates max_coord_{};
+        Coordinates min_coord_{};
+
     public:
         
         void AddDistances(std::string_view name, const std::unordered_map<std::string_view, uint32_t>& stop_to_distance);
@@ -88,6 +93,11 @@ namespace TC {
 
         bool ContainsStop(std::string_view name) const;
         Stop* GetStop(std::string_view name) const;
+
+        const std::deque<Bus>& GetBuses() const;
+
+        Coordinates GetMaxCoordinate() const;
+        Coordinates GetMinCoordinate() const;
 
         double GetRouteLengthDirect(std::string_view name) const;
         int GetRouteStopsCount(std::string_view name) const;

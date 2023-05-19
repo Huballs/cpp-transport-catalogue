@@ -254,7 +254,6 @@ private:
 
 class ObjectContainer {
 public:
-    
 
     template <typename Obj>
     void Add(Obj obj) {
