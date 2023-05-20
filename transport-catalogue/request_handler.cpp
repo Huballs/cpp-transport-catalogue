@@ -1,5 +1,5 @@
 #include "request_handler.h"
-
+#include <algorithm>
 
 namespace TC {
 
@@ -60,24 +60,32 @@ namespace TC {
 
     }
 
-    std::map<std::string_view, const Bus*> RequestHandler::GetBusMapAscendingName() const {
+    std::vector<const Bus*> RequestHandler::GetBusesAscendingName() const {
 
-        std::map<std::string_view, const Bus*> result;
+        std::vector<const Bus*> result;
 
         for(const auto& bus : db_.GetBuses()){
-            result.insert({bus.GetName(), &bus});
+            result.push_back(&bus);
         }
+
+        std::sort(result.begin(), result.end(), [](const Bus* lhs,const Bus* rhs){
+            return lhs->GetName() < rhs->GetName();
+        });
 
         return result;
     }
 
-    std::map<std::string_view, const Stop*> RequestHandler::GetStopMapAscendingName() const {
+    std::vector<const Stop*> RequestHandler::GetStopsAscendingName() const {
 
-        std::map<std::string_view, const Stop*> result;
+        std::vector<const Stop*> result;
 
         for(const auto& stop : db_.GetStops()){
-            result.insert({stop.GetName(), &stop});
+            result.push_back(&stop);
         }
+
+        std::sort(result.begin(), result.end(), [](const Stop* lhs,const Stop* rhs){
+            return lhs->GetName() < rhs->GetName();
+        });
 
         return result;
     }

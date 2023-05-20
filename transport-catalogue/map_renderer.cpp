@@ -1,10 +1,10 @@
 #include "map_renderer.h"
 
-namespace TC::Renderer {
+namespace TC {
 
-    void  MapRenderer::Render(const RequestHandler& request_handler, std::ostream& output){
-
-        const auto& buses = request_handler.GetBusMapAscendingName();
+    void MapRenderer::Render(std::vector<const Bus*>  buses, 
+                    std::vector<const Stop*>  stops, 
+                    std::ostream& output){
 
         const auto coordinates = GetUsedCoordinates(buses);
 
@@ -21,8 +21,8 @@ namespace TC::Renderer {
         int i = 0;
 
         for(const auto& bus : buses){
-            if(bus.second->GetStopsCount()){
-                DrawRoute(*bus.second, document, projector, settings_.color_palette[i++]);
+            if(bus->GetStopsCount()){
+                DrawRoute(*bus, document, projector, settings_.color_palette[i++]);
                 if(i == total_colors)
                     i = 0;
             }
@@ -32,22 +32,21 @@ namespace TC::Renderer {
         i = 0;
 
         for(const auto& bus : buses){
-            if(bus.second->GetStopsCount()){
-                DrawRouteName(*bus.second, document, projector, settings_.color_palette[i++]);
+            if(bus->GetStopsCount()){
+                DrawRouteName(*bus, document, projector, settings_.color_palette[i++]);
                 if(i == total_colors)
                     i = 0;
             }
         }
 
         // stops
-        const auto & stops = request_handler.GetStopMapAscendingName();
 
         for(const auto& stop : stops){
-            DrawStopCircles(*stop.second, document, projector);
+            DrawStopCircles(*stop, document, projector);
         }
 
         for(const auto& stop : stops){
-            DrawStopName(*stop.second, document, projector);
+            DrawStopName(*stop, document, projector);
         }
 
         document.Render(output);
@@ -158,10 +157,14 @@ namespace TC::Renderer {
         document.Add(route);
     }
 
-    std::vector<Geo::Coordinates> MapRenderer::GetUsedCoordinates(const std::map<std::string_view, const TC::Bus *> &buses) const {
+    void MapRenderer::SetSettings(map_settings_t& settings){
+        settings_ = settings;
+    }
+
+    std::vector<Geo::Coordinates> MapRenderer::GetUsedCoordinates(std::vector<const Bus*>& buses) const {
         std::vector<Geo::Coordinates> result;
         for(const auto& bus : buses){
-            for(const auto& stop : bus.second->GetStops()){
+            for(const auto& stop : bus->GetStops()){
                 result.push_back(stop->getCoordinates());
             }
         }

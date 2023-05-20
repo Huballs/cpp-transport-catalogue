@@ -1,31 +1,37 @@
 #pragma once
 
-#include <istream>
 #include "json.h"
 #include "transport_catalogue.h"
-#include "request_handler.h"
-#include "map_renderer.h"
+#include "domain.h"
 
 namespace TC {
 
     namespace Input{
 
-        namespace Json {
+        class JSONReader : public Reader<json::Array, json::Dict, json::Node>{
+        public:
+            JSONReader(std::istream& stream);
 
-            /* reads a stream and fills tc with buses and stops if any
-                returns stream converted to json */
-            json::Document Reader(RequestHandler& request_handler, std::istream& input);
+            const json::Array& GetRequestNodesAsArray(std::string_view name) override;
+            const json::Dict& GetRequestNodesAsMap(std::string_view name) override;
 
-            /* reads stat requests from json and puts results 
-                from tc in to a stream in json format */
-            void ReadStatRequests(RequestHandler& request_handler, const json::Document& document, std::ostream& output);
+            std::string_view GetFieldAsString(const json::Node& node, std::string_view name) override;
+            bool GetFieldAsBool(const json::Node& node, std::string_view name) override;
+            double GetFieldAsDouble(const json::Node& node, std::string_view name) override;
+            int GetFieldAsInt(const json::Node& node, std::string_view name) override;
 
-            Renderer::map_settings_t ReadMapRenderSettings(const json::Document& document);
+            const json::Node& GetFieldAsNode(const json::Node& node, std::string_view name) override;
 
-            namespace detail {
-                svg::Color NodeToSvgColor(const json::Node& node);
+            const json::Array& GetFieldAsArrayNodes(const json::Node& node, std::string_view name) override;
+            const json::Dict& GetFieldAsMapNodes(const json::Node& node, std::string_view name) override;
+
+            void PrintOut(json::Node node, std::ostream& out) override{
+                PrintNode(node, out);
             }
-        }
 
-    } // namespace JsonReader
+        private:
+            json::Document document_;
+        };
+
+    } // namespace Input
 } // namespace TC

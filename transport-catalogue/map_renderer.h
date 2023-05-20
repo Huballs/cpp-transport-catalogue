@@ -2,7 +2,6 @@
 
 #include "geo.h"
 #include "svg.h"
-#include "request_handler.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -10,8 +9,10 @@
 #include <optional>
 #include <vector>
 #include <map>
+#include "domain.h"
+#include "transport_catalogue.h"
 
-namespace TC::Renderer {
+namespace TC {
 
     using namespace svg;
 
@@ -19,32 +20,16 @@ namespace TC::Renderer {
 
     class SphereProjector;
     
-    struct map_settings_t {
-        double width;
-        double height;
-        double padding;
 
-        double line_width;
-        double stop_radius;
-
-        int bus_label_font_size;
-        Point bus_label_offset;
-
-        int stop_label_font_size;
-        Point stop_label_offset;
-
-        Color underlayer_color;
-        double underlayer_width;
-
-        std::vector<Color> color_palette;
-    };
-
-    class MapRenderer{
+    class MapRenderer : public Renderer{
     public:
-        MapRenderer(map_settings_t& settings) 
-            : settings_(std::move(settings)){};
+        MapRenderer() = default;
 
-        void Render(const RequestHandler& request_handler, std::ostream& output);
+        void Render(std::vector<const Bus*>  buses, 
+                    std::vector<const Stop*>  stops, 
+                    std::ostream& output);
+
+        void SetSettings(map_settings_t& settings);
 
     private:
         void DrawRoute(const Bus& bus, svg::Document& document, SphereProjector& projector, svg::Color color);
@@ -52,7 +37,7 @@ namespace TC::Renderer {
         void DrawStopCircles (const Stop& bus, svg::Document& document, SphereProjector& projector);
         void DrawStopName(const Stop& stop, svg::Document& document, SphereProjector& projector);
 
-        std::vector<Geo::Coordinates> GetUsedCoordinates(const std::map<std::string_view, const TC::Bus *> &buses) const;
+        std::vector<Geo::Coordinates> GetUsedCoordinates(std::vector<const Bus*>& buses) const;
 
         map_settings_t settings_;
 

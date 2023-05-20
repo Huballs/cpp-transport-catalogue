@@ -1,16 +1,22 @@
 #include "transport_catalogue.h"
 #include "json_reader.h"
+#include "request_handler.h"
 
 #include <iostream>
 
 int main() {
 
     TC::TransportCatalogue catalogue;
-    TC::RequestHandler request_handler(catalogue);
+    TC::Input::JSONReader reader(std::cin);
+    TC::MapRenderer renderer;
 
-    const auto document =  TC::Input::Json::Reader(request_handler, std::cin);
+    TC::RequestHandler request_handler(catalogue, renderer);
 
-    TC::Input::Json::ReadStatRequests(request_handler, document, std::cout);
+    request_handler.ReadRequests(std::cout, reader);
+
+    //const auto document =  TC::Input::Json::Reader(request_handler, std::cin);
+
+    //TC::Input::Json::ReadStatRequests(request_handler, document, std::cout);
 
     return 0;
 }

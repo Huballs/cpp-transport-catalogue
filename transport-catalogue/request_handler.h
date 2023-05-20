@@ -4,6 +4,10 @@
 #include <optional>
 #include <unordered_set>
 #include <map>
+#include <memory>
+#include <sstream>
+#include "domain.h"
+#include "map_renderer.h"
 
 namespace TC {
 
@@ -40,8 +44,18 @@ class RequestHandler {
             const std::set<std::string_view>& buses;
             
         };
+        
+        
+        RequestHandler(TransportCatalogue& db, Renderer& renderer) : db_(db), renderer_(renderer){};
 
-        RequestHandler(TransportCatalogue& db) : db_(db){};
+        template <typename Array, typename Dict, typename Node>
+        void ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader);
+
+        template <typename Array, typename Dict, typename Node>
+        void ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader);
+
+        template <typename Array, typename Dict, typename Node>
+        map_settings_t ReadMapRenderSettings(Reader<Array, Dict, Node>& reader);
 
         /* stores add request for later fulfillment */
         void QueueAddRequest(base_request_t& request);
@@ -57,8 +71,8 @@ class RequestHandler {
 
         const std::deque<Bus>& GetBuses() const;
 
-        std::map<std::string_view, const Bus*> GetBusMapAscendingName() const;
-        std::map<std::string_view, const Stop*> GetStopMapAscendingName() const;
+        std::vector<const Bus*> GetBusesAscendingName() const;
+        std::vector<const Stop*> GetStopsAscendingName() const;
 
     private:
 
@@ -66,6 +80,178 @@ class RequestHandler {
         std::vector<base_request_t> requests_add_bus;
 
         TransportCatalogue& db_;
+        Renderer& renderer_;
 
     };
+
+namespace detail {
+
+    template <typename Node>
+    svg::Color NodeToSvgColor(const Node& node){
+
+        if(node.IsArray()){
+            const auto& color_array = node.AsArray();
+
+            if (color_array.size() == 3){
+                svg::Rgb color;
+                color.red = color_array[0].AsInt();
+                color.green = color_array[1].AsInt();
+                color.blue = color_array[2].AsInt();
+                return color;
+            } else 
+            if (color_array.size() == 4){
+                svg::Rgba color;
+                color.red = color_array[0].AsInt();
+                color.green = color_array[1].AsInt();
+                color.blue = color_array[2].AsInt();
+                color.opacity = color_array[3].AsDouble();
+                return color;
+            }
+        } else 
+        if (node.IsString()){
+            return node.AsString();
+        }
+    return svg::Rgb();
+    }
+} // namespace detail
+
+
+template <typename Array, typename Dict, typename Node>
+void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader){
+
+    const auto request_nodes = reader.GetRequestNodesAsArray("base_requests");
+
+    for(const auto& request_node : request_nodes){
+
+        base_request_t request;
+
+        if(reader.GetFieldAsString(request_node, "type") == "Bus"){
+                
+                request.type = "Bus";
+                request.name = reader.GetFieldAsString(request_node, "name");
+                request.is_roundtrip = reader.GetFieldAsBool(request_node, "is_roundtrip");
+
+                for(const auto& stop_node : reader.GetFieldAsArrayNodes(request_node, "stops")){
+                    request.stops.push_back(stop_node.AsString());
+                }
+        } else 
+        if(reader.GetFieldAsString(request_node, "type") == "Stop"){
+
+            request.type = "Stop";
+            request.name = reader.GetFieldAsString(request_node, "name");
+            request.latitude = reader.GetFieldAsDouble(request_node, "latitude");
+            request.longitude = reader.GetFieldAsDouble(request_node, "longitude");
+
+            for(const auto& [name, dist_node]: reader.GetFieldAsMapNodes(request_node, "road_distances")){
+                request.road_distances.insert({name, dist_node.AsInt()});
+            }
+        }
+
+        QueueAddRequest(request);
+    }
+
+    FulfillAddRequests();
+
+    ReadStatRequests(output, reader);
+}
+
+template <typename Array, typename Dict, typename Node>
+ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader){
+
+        using namespace std::string_literals;
+
+        const auto request_nodes = reader.GetRequestNodesAsArray("stat_requests");
+
+        Array array_output;
+
+        for(const auto& request_node : request_nodes){
+
+            Dict request_output;
+            request_output["request_id"] = reader.GetFieldAsInt(request_node, "id");
+
+            if(reader.GetFieldAsString(request_node, "type") == "Bus"){
+
+                const auto& name = reader.GetFieldAsString(request_node, "name");
+
+                if (const auto& bus_stat = GetBusStat(name)){
+                    request_output["curvature"] = Node{bus_stat->curvature};
+                    request_output["route_length"] = Node{bus_stat->length};
+                    request_output["stop_count"] = Node{bus_stat->stop_count};
+                    request_output["unique_stop_count"] = Node{bus_stat->unique_stop_count};
+                } else {
+                    request_output["error_message"] = Node{"not found"s};
+
+                }
+            } else 
+            if (reader.GetFieldAsString(request_node, "type") == "Stop"){
+
+                const auto& name = reader.GetFieldAsString(request_node, "name");
+
+                if (const auto& stop_stat = GetStopStat(name)){
+                    
+                    Array stops;
+                    
+                    for(const auto stop : stop_stat->buses){
+                        stops.push_back(Node{std::string(stop)});
+                    }
+                    request_output["buses"] = Node{stops};
+
+                } else {
+                    request_output["error_message"] = Node{"not found"s};
+
+                }
+            } else 
+            if (reader.GetFieldAsString(request_node, "type") == "Map"){
+
+                auto map_renderer_settings = ReadMapRenderSettings(reader);
+                
+                renderer_.SetSettings(map_renderer_settings);
+
+                std::stringstream stream;
+                renderer_.Render(GetBusesAscendingName(), GetStopsAscendingName(), stream);
+
+                request_output["map"] = Node{stream.str()};
+            }
+
+            array_output.push_back(Node{request_output});
+
+        }
+
+        reader.PrintOut(array_output, output);
+    }
+
+template <typename Array, typename Dict, typename Node>
+map_settings_t RequestHandler::ReadMapRenderSettings(Reader<Array, Dict, Node>& reader) {
+
+        const auto settings_map = reader.GetRequestNodesAsMap("render_settings");
+
+        map_settings_t settings;
+
+        settings.width = reader.GetFieldAsDouble(settings_map, "width");
+        settings.height = reader.GetFieldAsDouble(settings_map, "height");
+        settings.padding = reader.GetFieldAsDouble(settings_map, "padding");
+        settings.line_width = reader.GetFieldAsDouble(settings_map, "line_width");
+        settings.stop_radius = reader.GetFieldAsDouble(settings_map, "stop_radius");
+        settings.bus_label_font_size = reader.GetFieldAsInt(settings_map, "bus_label_font_size");
+        settings.stop_label_font_size = reader.GetFieldAsInt(settings_map, "stop_label_font_size");
+        settings.underlayer_width = reader.GetFieldAsDouble(settings_map, "underlayer_width");
+
+        settings.bus_label_offset = {reader.GetFieldAsArrayNodes(settings_map, "bus_label_offset")[0].AsDouble(),
+                                     reader.GetFieldAsArrayNodes(settings_map, "bus_label_offset")[1].AsDouble()};
+        
+        settings.stop_label_offset = {reader.GetFieldAsArrayNodes(settings_map, "stop_label_offset")[0].AsDouble(),
+                                     reader.GetFieldAsArrayNodes(settings_map, "stop_label_offset")[1].AsDouble()};
+       
+
+        settings.underlayer_color = detail::NodeToSvgColor(reader.GetFieldAsNode(settings_map, "underlayer_color"));
+
+        const auto color_palette = reader.GetFieldAsArrayNodes(settings_map,"color_palette");
+
+        for(const auto& color_node : color_palette){
+            settings.color_palette.push_back(detail::NodeToSvgColor(color_node));
+        }
+
+        return settings;
+    }
+
 } // namespace TC
