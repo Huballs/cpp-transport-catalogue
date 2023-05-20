@@ -1,6 +1,7 @@
 #include "json_reader.h"
 #include <string>
 #include "map_renderer.h"
+#include <sstream>
 
 namespace TC::Input::Json {
 
@@ -11,7 +12,6 @@ namespace TC::Input::Json {
         if(!document.GetRoot().IsMap())
             throw json::ParsingError("Json::reader top level parsing error");
 
-        // -- base requests --
         const auto& base_requests = document.GetRoot().AsMap().find("base_requests")->second;
 
         if(!base_requests.IsArray())
@@ -76,12 +76,12 @@ namespace TC::Input::Json {
 
             int id = request_map.at("id").AsInt();
             const auto& type = request_map.at("type").AsString();
-            const auto& name = request_map.at("name").AsString();
 
             json::Dict json_request;
             json_request["request_id"] = json::Node{id};
 
             if (type == "Bus"){
+                const auto& name = request_map.at("name").AsString();
 
                 if (const auto& bus_stat = request_handler.GetBusStat(name)){
                     
@@ -97,6 +97,7 @@ namespace TC::Input::Json {
 
             } else 
             if (type == "Stop"){
+                const auto& name = request_map.at("name").AsString();
 
                 if (const auto& stop_stat = request_handler.GetStopStat(name)){
                     
@@ -111,6 +112,16 @@ namespace TC::Input::Json {
                     json_request["error_message"] = json::Node{"not found"s};
 
                 }
+            } else 
+            if (type == "Map"){
+                auto MapRenderSettings = ReadMapRenderSettings(document);
+                
+                TC::Renderer::MapRenderer renderer(MapRenderSettings);
+
+                std::stringstream stream;
+                renderer.Render(request_handler, stream);
+
+                json_request["map"] = json::Node{stream.str()};
             }
 
             json_output.push_back(json::Node{json_request});

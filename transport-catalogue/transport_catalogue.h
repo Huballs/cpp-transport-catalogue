@@ -26,6 +26,7 @@ namespace TC {
         const std::set<std::string_view>& GetBuses() const {return buses;}
         std::string_view GetName() const { return name;}
         Coordinates getCoordinates() const { return coordinates;}
+        size_t GetBusCount() const { return buses.size();}
     };
 
     class Bus {
@@ -74,10 +75,6 @@ namespace TC {
 
         std::unordered_map<std::pair<Stop*, Stop*>, uint32_t, TwoPointerStopsJasher> stops_distances_;
 
-        void CheckMinMaxCoords(const Coordinates& coordinates);
-        Coordinates max_coord_{};
-        Coordinates min_coord_{};
-
     public:
         
         void AddDistances(std::string_view name, const std::unordered_map<std::string_view, uint32_t>& stop_to_distance);
@@ -95,6 +92,7 @@ namespace TC {
         Stop* GetStop(std::string_view name) const;
 
         const std::deque<Bus>& GetBuses() const;
+        const std::deque<Stop>& GetStops() const;
 
         Coordinates GetMaxCoordinate() const;
         Coordinates GetMinCoordinate() const;

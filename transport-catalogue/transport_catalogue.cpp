@@ -27,8 +27,7 @@ namespace TC {
         stops_.push_back(Stop{std::string(name), coordinates});
 
         stopname_to_stops_.insert({stops_.back().name, &stops_.back()});
-
-        CheckMinMaxCoords(coordinates);
+        
     }
 
     void TransportCatalogue::AddRoute(std::string_view name, const std::pair<std::vector<std::string_view>, bool>& stops){
@@ -103,6 +102,10 @@ namespace TC {
         return buses_;
     }
 
+    const std::deque<Stop>& TransportCatalogue::GetStops() const{
+        return stops_;
+    }
+
     double TransportCatalogue::GetRouteLengthDirect(std::string_view name) const{
         return busname_to_bus_.at(name)->length_direct;
     }
@@ -113,27 +116,6 @@ namespace TC {
 
     int TransportCatalogue::GetRouteStopsUniqueCount(std::string_view name) const{
         return busname_to_bus_.at(name)->stops_unique_count;
-    }
-
-    Coordinates TransportCatalogue::GetMaxCoordinate() const{
-        return max_coord_;
-    }
-    Coordinates TransportCatalogue::GetMinCoordinate() const{
-        return min_coord_;
-    }
-    
-    void TransportCatalogue::CheckMinMaxCoords(const Coordinates& coordinates){
-        if(max_coord_ == Geo::Coordinates{0.0, 0.0})
-            max_coord_ = coordinates;
-
-        if(min_coord_ == Geo::Coordinates{0.0, 0.0})
-            min_coord_ = coordinates;
-
-        max_coord_.lat = (max_coord_.lat > coordinates.lat ? max_coord_.lat : coordinates.lat);
-        max_coord_.lng = (max_coord_.lng > coordinates.lng ? max_coord_.lng : coordinates.lng);
-
-        min_coord_.lat = (min_coord_.lat < coordinates.lat ? min_coord_.lat : coordinates.lat);
-        min_coord_.lng = (min_coord_.lng < coordinates.lng ? min_coord_.lng : coordinates.lng);
     }
 
 } // namespace TC

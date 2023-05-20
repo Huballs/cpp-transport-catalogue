@@ -41,8 +41,6 @@ class RequestHandler {
             
         };
 
-        // MapRenderer понадобится в следующей части итогового проекта
-        //RequestHandler(const TransportCatalogue& db, const renderer::MapRenderer& renderer);
         RequestHandler(TransportCatalogue& db) : db_(db){};
 
         /* stores add request for later fulfillment */
@@ -59,24 +57,15 @@ class RequestHandler {
 
         const std::deque<Bus>& GetBuses() const;
 
-        Geo::Coordinates GetMinCoordinates() const;
-        Geo::Coordinates GetMaxCoordinates() const;
-
         std::map<std::string_view, const Bus*> GetBusMapAscendingName() const;
-
-        // Возвращает маршруты, проходящие через
-        //const std::unordered_set<Bus*>* GetBusesByStop(const std::string_view& stop_name) const;
-
-        // Этот метод будет нужен в следующей части итогового проекта
-        //svg::Document RenderMap() const;
+        std::map<std::string_view, const Stop*> GetStopMapAscendingName() const;
 
     private:
 
         std::vector<base_request_t> requests_add_stop;
         std::vector<base_request_t> requests_add_bus;
 
-        // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
         TransportCatalogue& db_;
-        //const renderer::MapRenderer& renderer_;
+
     };
 } // namespace TC

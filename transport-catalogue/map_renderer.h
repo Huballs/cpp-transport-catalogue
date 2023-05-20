@@ -44,16 +44,18 @@ namespace TC::Renderer {
         MapRenderer(map_settings_t& settings) 
             : settings_(std::move(settings)){};
 
-        void  Render(const RequestHandler& request_handler, std::ostream& output);
+        void Render(const RequestHandler& request_handler, std::ostream& output);
 
     private:
         void DrawRoute(const Bus& bus, svg::Document& document, SphereProjector& projector, svg::Color color);
+        void DrawRouteName(const Bus& bus, svg::Document& document, SphereProjector& projector, svg::Color color);
+        void DrawStopCircles (const Stop& bus, svg::Document& document, SphereProjector& projector);
+        void DrawStopName(const Stop& stop, svg::Document& document, SphereProjector& projector);
 
         std::vector<Geo::Coordinates> GetUsedCoordinates(const std::map<std::string_view, const TC::Bus *> &buses) const;
 
         map_settings_t settings_;
 
-        //std::vector<svg::Polyline> lines_;
     };
 
     namespace detail {
@@ -67,23 +69,13 @@ namespace TC::Renderer {
         SphereProjector(PointInputIt points_begin, PointInputIt points_end,
                         double max_width, double max_height, double padding)
             : padding_(padding) 
-
-        //template <typename PointInputIt>
-       /* SphereProjector(Geo::Coordinates min_coord, Geo::Coordinates max_coord,
-                        double max_width, double max_height, double padding)
-            : padding_(padding) */
         {
             using namespace detail;
             // Если точки поверхности сферы не заданы, вычислять нечего
             if (points_begin == points_end) {
                 return;
             }
-/*
-            min_lon_ = min_coord.lng;
-            const double max_lon = max_coord.lng;
 
-            max_lat_ = max_coord.lat;
-            const double min_lat = min_coord.lat;*/
             // Находим точки с минимальной и максимальной долготой
             const auto [left_it, right_it] = std::minmax_element(
                 points_begin, points_end,
