@@ -14,9 +14,5 @@ int main() {
 
     request_handler.ReadRequests(std::cout, reader);
 
-    //const auto document =  TC::Input::Json::Reader(request_handler, std::cin);
-
-    //TC::Input::Json::ReadStatRequests(request_handler, document, std::cout);
-
     return 0;
 }
