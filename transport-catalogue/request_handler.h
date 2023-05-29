@@ -48,11 +48,11 @@ class RequestHandler {
         
         RequestHandler(TransportCatalogue& db, Renderer& renderer) : db_(db), renderer_(renderer){};
 
-        template <typename Array, typename Dict, typename Node>
-        void ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader);
+        template <typename Array, typename Dict, typename Node, class OutputBuilder>
+        void ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder);
 
-        template <typename Array, typename Dict, typename Node>
-        void ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader);
+        template <typename Array, typename Dict, typename Node, class OutputBuilder>
+        void ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder);
 
         template <typename Array, typename Dict, typename Node>
         map_settings_t ReadMapRenderSettings(Reader<Array, Dict, Node>& reader);
@@ -116,8 +116,8 @@ namespace detail {
 } // namespace detail
 
 
-template <typename Array, typename Dict, typename Node>
-void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader){
+template <typename Array, typename Dict, typename Node, class OutputBuilder>
+void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder){
 
     const auto request_nodes = reader.GetRequestNodesAsArray("base_requests");
 
@@ -152,15 +152,22 @@ void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node
 
     FulfillAddRequests();
 
-    ReadStatRequests(output, reader);
+    ReadStatRequests(output, reader, OutputBuilder{});
 }
 
-template <typename Array, typename Dict, typename Node>
- void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader){
+template <typename Array, typename Dict, typename Node, class OutputBuilder>
+ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder){
 
         using namespace std::string_literals;
 
         const auto request_nodes = reader.GetRequestNodesAsArray("stat_requests");
+
+        OutputBuilder{}.StartDict()
+                .Key("key1"s).Value(123)
+                .EndDict()
+                .Print(output);
+
+        return;
 
         Array array_output;
 
