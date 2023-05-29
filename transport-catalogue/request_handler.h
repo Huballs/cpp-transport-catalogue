@@ -48,10 +48,10 @@ class RequestHandler {
         
         RequestHandler(TransportCatalogue& db, Renderer& renderer) : db_(db), renderer_(renderer){};
 
-        template <typename Array, typename Dict, typename Node, class OutputBuilder>
+        template <typename Array, typename Dict, typename Node, typename OutputBuilder>
         void ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder);
 
-        template <typename Array, typename Dict, typename Node, class OutputBuilder>
+        template <typename Array, typename Dict, typename Node, typename OutputBuilder>
         void ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder);
 
         template <typename Array, typename Dict, typename Node>
@@ -116,7 +116,7 @@ namespace detail {
 } // namespace detail
 
 
-template <typename Array, typename Dict, typename Node, class OutputBuilder>
+template <typename Array, typename Dict, typename Node, typename OutputBuilder>
 void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder){
 
     const auto request_nodes = reader.GetRequestNodesAsArray("base_requests");
@@ -155,39 +155,41 @@ void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node
     ReadStatRequests(output, reader, OutputBuilder{});
 }
 
-template <typename Array, typename Dict, typename Node, class OutputBuilder>
+template <typename Array, typename Dict, typename Node, typename OutputBuilder>
  void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder){
 
         using namespace std::string_literals;
 
         const auto request_nodes = reader.GetRequestNodesAsArray("stat_requests");
 
-        OutputBuilder{}.StartDict()
-                .Key("key1"s).Value(123)
-                .EndDict()
-                .Print(output);
-
-        return;
-
         Array array_output;
 
         for(const auto& request_node : request_nodes){
 
-            Dict request_output;
-            request_output["request_id"] = reader.GetFieldAsInt(request_node, "id");
+            Node request_output;
+
+            int request_id = reader.GetFieldAsInt(request_node, "id");
 
             if(reader.GetFieldAsString(request_node, "type") == "Bus"){
 
                 const auto& name = reader.GetFieldAsString(request_node, "name");
 
                 if (const auto& bus_stat = GetBusStat(name)){
-                    request_output["curvature"] = Node{bus_stat->curvature};
-                    request_output["route_length"] = Node{bus_stat->length};
-                    request_output["stop_count"] = Node{bus_stat->stop_count};
-                    request_output["unique_stop_count"] = Node{bus_stat->unique_stop_count};
-                } else {
-                    request_output["error_message"] = Node{"not found"s};
 
+                    request_output = OutputBuilder{}.StartDict()
+                        .Key("request_id").Value(request_id)
+                        .Key("curvature").Value(bus_stat->curvature)
+                        .Key("route_length").Value(bus_stat->length)
+                        .Key("stop_count").Value(bus_stat->stop_count)
+                        .Key("unique_stop_count").Value(bus_stat->unique_stop_count)
+                        .EndDict().Build();
+                        
+                } else {
+
+                    request_output = OutputBuilder{}.StartDict()
+                        .Key("request_id").Value(request_id)
+                        .Key("error_message").Value("not found"s)
+                        .EndDict().Build();
                 }
             } else 
             if (reader.GetFieldAsString(request_node, "type") == "Stop"){
@@ -199,13 +201,20 @@ template <typename Array, typename Dict, typename Node, class OutputBuilder>
                     Array stops;
                     
                     for(const auto stop : stop_stat->buses){
-                        stops.push_back(Node{std::string(stop)});
+                        stops.push_back(OutputBuilder{}.Value(std::string(stop)).Build());
                     }
-                    request_output["buses"] = Node{stops};
+
+                    request_output = OutputBuilder{}.StartDict()
+                        .Key("request_id").Value(request_id)
+                        .Key("buses").Value(stops)
+                        .EndDict().Build();
 
                 } else {
-                    request_output["error_message"] = Node{"not found"s};
 
+                    request_output = OutputBuilder{}.StartDict()
+                        .Key("request_id").Value(request_id)
+                        .Key("error_message").Value("not found"s)
+                        .EndDict().Build();
                 }
             } else 
             if (reader.GetFieldAsString(request_node, "type") == "Map"){
@@ -217,14 +226,17 @@ template <typename Array, typename Dict, typename Node, class OutputBuilder>
                 std::stringstream stream;
                 renderer_.Render(GetBusesAscendingName(), GetStopsAscendingName(), stream);
 
-                request_output["map"] = Node{stream.str()};
+                request_output = OutputBuilder{}.StartDict()
+                        .Key("request_id").Value(request_id)
+                        .Key("map").Value(stream.str())
+                        .EndDict().Build();
             }
 
-            array_output.push_back(Node{request_output});
+            array_output.push_back(request_output);
 
         }
 
-        reader.PrintOut(array_output, output);
+        OutputBuilder{}.Value(array_output).Print(output);
     }
 
 template <typename Array, typename Dict, typename Node>

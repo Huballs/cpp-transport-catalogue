@@ -44,9 +44,6 @@ namespace TC {
         virtual const Array& GetFieldAsArrayNodes(const Node& node, std::string_view name) = 0;
         virtual const Dict& GetFieldAsMapNodes(const Node& node, std::string_view name) = 0;
 
-        /* хак, дописать writer */
-        virtual void PrintOut(Node node, std::ostream& out) = 0;
-
         virtual ~Reader() {};
     };
 

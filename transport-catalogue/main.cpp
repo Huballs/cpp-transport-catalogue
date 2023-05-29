@@ -7,12 +7,12 @@
 int main() {
 
     TC::TransportCatalogue catalogue;
-    TC::Input::JSONReader reader(std::cin);
     TC::MapRenderer renderer;
 
     TC::RequestHandler request_handler(catalogue, renderer);
 
-
+    TC::Input::JSONReader reader(std::cin);
+    
     request_handler.ReadRequests(std::cout, reader, json::Builder{});
 
     return 0;

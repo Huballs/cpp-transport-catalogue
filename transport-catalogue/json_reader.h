@@ -25,10 +25,6 @@ namespace TC {
             const json::Array& GetFieldAsArrayNodes(const json::Node& node, std::string_view name) override;
             const json::Dict& GetFieldAsMapNodes(const json::Node& node, std::string_view name) override;
 
-            void PrintOut(json::Node node, std::ostream& out) override{
-                PrintNode(node, out);
-            }
-
         private:
             json::Document document_;
         };
