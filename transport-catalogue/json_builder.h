@@ -73,6 +73,10 @@ namespace json {
 
         void Print(std::ostream& output);
 
+        using Node_t = Node;
+        using Array_t = Array;
+        using Dict_t = Dict;
+
     private:
 
         enum class j_t{

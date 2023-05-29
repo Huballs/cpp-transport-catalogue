@@ -156,17 +156,17 @@ void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node
 }
 
 template <typename Array, typename Dict, typename Node, typename OutputBuilder>
- void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder){
+void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder){
 
         using namespace std::string_literals;
 
         const auto request_nodes = reader.GetRequestNodesAsArray("stat_requests");
 
-        Array array_output;
+        typename OutputBuilder::Array_t array_output;
 
         for(const auto& request_node : request_nodes){
 
-            Node request_output;
+            typename OutputBuilder::Node_t request_output;
 
             int request_id = reader.GetFieldAsInt(request_node, "id");
 
@@ -198,7 +198,7 @@ template <typename Array, typename Dict, typename Node, typename OutputBuilder>
 
                 if (const auto& stop_stat = GetStopStat(name)){
                     
-                    Array stops;
+                    typename OutputBuilder::Array_t stops;
                     
                     for(const auto stop : stop_stat->buses){
                         stops.push_back(OutputBuilder{}.Value(std::string(stop)).Build());
