@@ -82,6 +82,18 @@ class RequestHandler {
         TransportCatalogue& db_;
         Renderer& renderer_;
 
+        template <typename OutputBuilder>
+        typename OutputBuilder::Node_t BuildBusStatNode(int id, const stat_bus_t& bus_stat);
+
+        template <typename OutputBuilder>
+        typename OutputBuilder::Node_t BuildStopStatNode(int id, const stat_stop_t& stop_stat);
+
+        template <typename OutputBuilder>
+        typename OutputBuilder::Node_t BuildMapStatNode(int id, map_settings_t& map_settings);
+
+        template <typename OutputBuilder>
+        typename OutputBuilder::Node_t BuildNotFoundNode(int id);
+
     };
 
 namespace detail {
@@ -155,6 +167,53 @@ void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node
     ReadStatRequests(output, reader, OutputBuilder{});
 }
 
+template <typename OutputBuilder>
+typename OutputBuilder::Node_t RequestHandler::BuildBusStatNode(int id, const stat_bus_t& bus_stat){
+    return OutputBuilder{}.StartDict()
+            .Key("request_id").Value(id)
+            .Key("curvature").Value(bus_stat.curvature)
+            .Key("route_length").Value(bus_stat.length)
+            .Key("stop_count").Value(bus_stat.stop_count)
+            .Key("unique_stop_count").Value(bus_stat.unique_stop_count)
+            .EndDict().Build();
+}
+
+template <typename OutputBuilder>
+typename OutputBuilder::Node_t RequestHandler::BuildStopStatNode(int id, const stat_stop_t& stop_stat){
+    typename OutputBuilder::Array_t stops;
+                    
+    for(const auto stop : stop_stat.buses){
+        stops.push_back(OutputBuilder{}.Value(std::string(stop)).Build());
+    }
+
+    return OutputBuilder{}.StartDict()
+        .Key("request_id").Value(id)
+        .Key("buses").Value(stops)
+        .EndDict().Build();
+}
+
+template <typename OutputBuilder>
+typename OutputBuilder::Node_t RequestHandler::BuildMapStatNode(int id, map_settings_t& map_settings){
+    
+    renderer_.SetSettings(map_settings);
+
+    std::stringstream stream;
+    renderer_.Render(GetBusesAscendingName(), GetStopsAscendingName(), stream);
+
+    return OutputBuilder{}.StartDict()
+            .Key("request_id").Value(id)
+            .Key("map").Value(stream.str())
+            .EndDict().Build();
+}
+
+template <typename OutputBuilder>
+typename OutputBuilder::Node_t RequestHandler::BuildNotFoundNode(int id){
+    return OutputBuilder{}.StartDict()
+            .Key("request_id").Value(id)
+            .Key("error_message").Value("not found")
+            .EndDict().Build();
+}
+
 template <typename Array, typename Dict, typename Node, typename OutputBuilder>
 void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder){
 
@@ -175,21 +234,9 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
                 const auto& name = reader.GetFieldAsString(request_node, "name");
 
                 if (const auto& bus_stat = GetBusStat(name)){
-
-                    request_output = OutputBuilder{}.StartDict()
-                        .Key("request_id").Value(request_id)
-                        .Key("curvature").Value(bus_stat->curvature)
-                        .Key("route_length").Value(bus_stat->length)
-                        .Key("stop_count").Value(bus_stat->stop_count)
-                        .Key("unique_stop_count").Value(bus_stat->unique_stop_count)
-                        .EndDict().Build();
-                        
+                    request_output = BuildBusStatNode<OutputBuilder>(request_id, *bus_stat);
                 } else {
-
-                    request_output = OutputBuilder{}.StartDict()
-                        .Key("request_id").Value(request_id)
-                        .Key("error_message").Value("not found"s)
-                        .EndDict().Build();
+                    request_output = BuildNotFoundNode<OutputBuilder>(request_id);
                 }
             } else 
             if (reader.GetFieldAsString(request_node, "type") == "Stop"){
@@ -197,39 +244,14 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
                 const auto& name = reader.GetFieldAsString(request_node, "name");
 
                 if (const auto& stop_stat = GetStopStat(name)){
-                    
-                    typename OutputBuilder::Array_t stops;
-                    
-                    for(const auto stop : stop_stat->buses){
-                        stops.push_back(OutputBuilder{}.Value(std::string(stop)).Build());
-                    }
-
-                    request_output = OutputBuilder{}.StartDict()
-                        .Key("request_id").Value(request_id)
-                        .Key("buses").Value(stops)
-                        .EndDict().Build();
-
+                    request_output = BuildStopStatNode<OutputBuilder>(request_id, *stop_stat);
                 } else {
-
-                    request_output = OutputBuilder{}.StartDict()
-                        .Key("request_id").Value(request_id)
-                        .Key("error_message").Value("not found"s)
-                        .EndDict().Build();
+                    request_output = BuildNotFoundNode<OutputBuilder>(request_id);
                 }
             } else 
             if (reader.GetFieldAsString(request_node, "type") == "Map"){
-
                 auto map_renderer_settings = ReadMapRenderSettings(reader);
-                
-                renderer_.SetSettings(map_renderer_settings);
-
-                std::stringstream stream;
-                renderer_.Render(GetBusesAscendingName(), GetStopsAscendingName(), stream);
-
-                request_output = OutputBuilder{}.StartDict()
-                        .Key("request_id").Value(request_id)
-                        .Key("map").Value(stream.str())
-                        .EndDict().Build();
+                request_output = BuildMapStatNode<OutputBuilder>(request_id, map_renderer_settings);
             }
 
             array_output.push_back(request_output);
