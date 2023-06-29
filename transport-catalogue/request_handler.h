@@ -37,13 +37,13 @@ class RequestHandler {
             int unique_stop_count;
         };
 
-        struct stat_stop_t{
-            const std::set<std::string_view>& buses;
+        struct stat_route_t{
+            std::string_view to;
+            std::string_view from;
         };
 
-        struct routing_settings_t{
-            int bus_velocity;   // km/h
-            int bus_wait_time;  // minutes
+        struct stat_stop_t{
+            const std::set<std::string_view>& buses;
         };
         
         RequestHandler(TransportCatalogue& db, Renderer& renderer) : db_(db), renderer_(renderer){};
@@ -210,6 +210,12 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
         if (reader.GetFieldAsString(request_node, "type") == "Map"){
             auto map_renderer_settings = ReadMapRenderSettings(reader);
             request_output = BuildMapStatNode<OutputBuilder>(request_id, map_renderer_settings);
+        } else 
+        if (reader.GetFieldAsString(request_node, "type") == "Route"){
+            static std::optional<routing_settings_t> routing_settings;
+            if (!routing_settings){
+                routing_settings = ReadRoutingSettings(reader);
+            }
         }
 
         array_output.push_back(request_output);
@@ -221,7 +227,12 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
 
 template <typename Array, typename Dict, typename Node>
 routing_settings_t RequestHandler::ReadRoutingSettings(Reader<Array, Dict, Node>& reader){
-    return {1,1};
+
+    const auto settings_map = reader.GetRequestNodesAsMap("render_settings");
+    routing_settings_t settings;
+    settings.bus_velocity = reader.GetFieldAsInt(settings_map, "bus_velocity");
+    settings.bus_wait_time = reader.GetFieldAsInt(settings_map, "bus_wait_time");
+    return settings;
 }
 
 template <typename Array, typename Dict, typename Node>

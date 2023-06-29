@@ -27,6 +27,11 @@ namespace TC {
         std::vector<svg::Color> color_palette;
     };
 
+    struct routing_settings_t{
+        int bus_velocity;   // km/h
+        int bus_wait_time;  // minutes
+    };
+
     template <typename Array, typename Dict, typename Node>
     class Reader {
         public:
