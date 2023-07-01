@@ -26,6 +26,8 @@ namespace TC {
 
         stops_.push_back(Stop{std::string(name), coordinates});
 
+        stops_.back().index = stops_.size() - 1;
+
         stopname_to_stops_.insert({stops_.back().name, &stops_.back()});
         
     }

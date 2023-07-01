@@ -8,6 +8,7 @@
 #include <sstream>
 #include "domain.h"
 #include "map_renderer.h"
+#include "transport_router.h"
 
 namespace TC {
 
@@ -213,9 +214,17 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
         } else 
         if (reader.GetFieldAsString(request_node, "type") == "Route"){
             static std::optional<routing_settings_t> routing_settings;
+            static std::unique_ptr<TransportRouter> router;
             if (!routing_settings){
                 routing_settings = ReadRoutingSettings(reader);
+                router = std::make_unique<TransportRouter>(db_);
             }
+
+            const auto& from = reader.GetFieldAsString(request_node, "from");
+            const auto& to = reader.GetFieldAsString(request_node, "to");
+
+            router->Route(from, to);
+           
         }
 
         array_output.push_back(request_output);
@@ -228,7 +237,7 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
 template <typename Array, typename Dict, typename Node>
 routing_settings_t RequestHandler::ReadRoutingSettings(Reader<Array, Dict, Node>& reader){
 
-    const auto settings_map = reader.GetRequestNodesAsMap("render_settings");
+    const auto settings_map = reader.GetRequestNodesAsMap("routing_settings");
     routing_settings_t settings;
     settings.bus_velocity = reader.GetFieldAsInt(settings_map, "bus_velocity");
     settings.bus_wait_time = reader.GetFieldAsInt(settings_map, "bus_wait_time");

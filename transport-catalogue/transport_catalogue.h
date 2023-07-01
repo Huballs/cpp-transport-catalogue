@@ -18,6 +18,7 @@ namespace TC {
         std::string name;
         Coordinates coordinates;
         std::set<std::string_view> buses;
+        size_t index;
 
         friend TransportCatalogue;
 
@@ -28,6 +29,7 @@ namespace TC {
         std::string_view GetName() const { return name;}
         Coordinates getCoordinates() const { return coordinates;}
         size_t GetBusCount() const { return buses.size();}
+        size_t GetIndex() const {return index;}
     };
 
     class Bus {
@@ -95,8 +97,9 @@ namespace TC {
         const std::deque<Bus>& GetBuses() const;
         const std::deque<Stop>& GetStops() const;
 
-        Coordinates GetMaxCoordinate() const;
-        Coordinates GetMinCoordinate() const;
+        const auto& GetStopsDistances() const {
+            return stops_distances_;
+        }
 
         double GetRouteLengthDirect(std::string_view name) const;
         int GetRouteStopsCount(std::string_view name) const;
