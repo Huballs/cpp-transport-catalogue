@@ -81,7 +81,7 @@ namespace TC {
     public:
         
         void AddDistances(std::string_view name, const std::unordered_map<std::string_view, uint32_t>& stop_to_distance);
-        uint32_t GetDistance(Stop* stop1, Stop* stop2);
+        uint32_t GetDistance(Stop* stop1, Stop* stop2) const;
 
         void AddStop(std::string_view name, const Coordinates& coordinates);
 

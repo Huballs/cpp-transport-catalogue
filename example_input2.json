@@ -122,6 +122,12 @@
             "id": 5,
             "to": "Prazhskaya",
             "type": "Route"
+        },
+        {
+            "from": "Prazhskaya",
+            "id": 5,
+            "to": "Biryulyovo Zapadnoye",
+            "type": "Route"
         }
     ]
 }

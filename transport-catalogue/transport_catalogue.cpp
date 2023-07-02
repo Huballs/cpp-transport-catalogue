@@ -3,7 +3,7 @@
 
 namespace TC {
 
-    uint32_t TransportCatalogue::GetDistance(Stop* stop1, Stop* stop2){
+    uint32_t TransportCatalogue::GetDistance(Stop* stop1, Stop* stop2) const{
 
         auto it = stops_distances_.find({stop1, stop2});
         if(it != stops_distances_.end())
