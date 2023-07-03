@@ -217,7 +217,7 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
             static std::unique_ptr<TransportRouter> router;
             if (!routing_settings){
                 routing_settings = ReadRoutingSettings(reader);
-                router = std::make_unique<TransportRouter>(db_);
+                router = std::make_unique<TransportRouter>(db_, *routing_settings);
             }
 
             const auto& from = reader.GetFieldAsString(request_node, "from");

@@ -101,6 +101,10 @@ namespace TC {
             return stops_distances_;
         }
 
+        const Stop* GetStopByIndex(size_t index) const{
+            return &(stops_[index]);
+        }
+
         double GetRouteLengthDirect(std::string_view name) const;
         int GetRouteStopsCount(std::string_view name) const;
         int GetRouteStopsUniqueCount(std::string_view name) const;
