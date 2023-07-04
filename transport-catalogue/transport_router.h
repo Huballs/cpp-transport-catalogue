@@ -4,6 +4,7 @@
 #include <memory>
 #include <map>
 #include <iostream>
+#include "log_duration.h"
 
 namespace TC {
 
@@ -26,6 +27,8 @@ private:
 
 public:
     TransportRouter(const TransportCatalogue& catalogue, routing_settings_t settings) : catalogue_(catalogue), settings_(std::move(settings)){
+
+        LOG_DURATION("transport router constr");
 
         size_t graph_stops_count = catalogue.GetStops().size()*2 + catalogue.GetBuses().size() * catalogue.GetStops().size();
 
@@ -115,6 +118,8 @@ public:
 
     std::optional<Travel> Route(std::string_view from, std::string_view to){
 
+        LOG_DURATION("route total");
+
         if(from == to)
             return Travel{{}, 0};
 
@@ -138,7 +143,7 @@ public:
 
         travel.total_time = DistanceToTime(info->weight);
         
-        
+        LOG_DURATION("convert to travel");
 
         size_t from_stop = edge_infos_[info->edges[0]].from;
 

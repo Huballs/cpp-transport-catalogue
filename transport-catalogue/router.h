@@ -103,6 +103,7 @@ std::optional<typename Router<Weight>::RouteInfo> Router<Weight>::BuildRoute(Ver
     }
     const Weight weight = route_internal_data->weight;
     std::vector<EdgeId> edges;
+    
     for (std::optional<EdgeId> edge_id = route_internal_data->prev_edge;
          edge_id;
          edge_id = routes_internal_data_[from][graph_.GetEdge(*edge_id).from]->prev_edge)

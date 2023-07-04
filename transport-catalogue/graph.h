@@ -65,12 +65,12 @@ size_t DirectedWeightedGraph<Weight>::GetEdgeCount() const {
 
 template <typename Weight>
 const Edge<Weight>& DirectedWeightedGraph<Weight>::GetEdge(EdgeId edge_id) const {
-    return edges_.at(edge_id);
+    return edges_[edge_id];
 }
 
 template <typename Weight>
 typename DirectedWeightedGraph<Weight>::IncidentEdgesRange
 DirectedWeightedGraph<Weight>::GetIncidentEdges(VertexId vertex) const {
-    return ranges::AsRange(incidence_lists_.at(vertex));
+    return ranges::AsRange(incidence_lists_[vertex]);
 }
 }  // namespace graph
