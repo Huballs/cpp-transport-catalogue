@@ -9,16 +9,35 @@ namespace TC {
 
 class TransportRouter {
 
+private:
+    struct EdgeInfo{
+        bool is_waiting;
+        std::string_view bus;
+        size_t from;
+        size_t to;
+        size_t distance;
+    };
+
+    inline void StoreEdgeInfo(graph::EdgeId id, EdgeInfo info){
+        if(id >= edge_infos_.size())
+            edge_infos_.resize(id * 1.5 + 2);
+        edge_infos_[id] = std::move(info);
+    }
+
 public:
     TransportRouter(const TransportCatalogue& catalogue, routing_settings_t settings) : catalogue_(catalogue), settings_(std::move(settings)){
 
         size_t graph_stops_count = catalogue.GetStops().size()*2 + catalogue.GetBuses().size() * catalogue.GetStops().size();
+
+        edge_infos_.resize(graph_stops_count);
 
         graph_ = std::make_unique<graph::DirectedWeightedGraph<Weight>>(graph_stops_count);
 
         size_t bus_wait_distance_ = 1.0 * settings_.bus_wait_time / 60 * settings_.bus_velocity *1000 / 2; // bus wait time converted to distance
 
         size_t bus_stop_id = catalogue.GetStops().size();
+
+        graph::EdgeId edge_id;
 
         for(const auto& bus : catalogue.GetBuses()){
 
@@ -31,19 +50,26 @@ public:
                 size_t actual_stop_id = (*stop)->GetIndex();
                 size_t actual_next_stop_id = (*next_stop)->GetIndex();
 
-                weight w{catalogue.GetDistance(*stop, *next_stop), false, bus.GetName(), actual_stop_id, actual_next_stop_id};
+                size_t distance = catalogue.GetDistance(*stop, *next_stop);
 
-                graph_->AddEdge({bus_stop_id, bus_stop_id+1, w});
+                edge_id = graph_->AddEdge({bus_stop_id, bus_stop_id+1, distance});
 
-                graph_->AddEdge({actual_stop_id, bus_stop_id, {bus_wait_distance_, true, {}, actual_stop_id, actual_stop_id}});
-                graph_->AddEdge({bus_stop_id, actual_stop_id, {bus_wait_distance_, true, {},  actual_stop_id, actual_stop_id}});
+                StoreEdgeInfo(edge_id, {false, bus.GetName(), actual_stop_id, actual_next_stop_id, distance});
+
+                edge_id = graph_->AddEdge({actual_stop_id, bus_stop_id, bus_wait_distance_});
+                StoreEdgeInfo(edge_id, {true, {}, actual_stop_id, actual_stop_id, bus_wait_distance_});
+
+                edge_id = graph_->AddEdge({bus_stop_id, actual_stop_id, bus_wait_distance_});
+                StoreEdgeInfo(edge_id, {true, {}, actual_stop_id, actual_stop_id, bus_wait_distance_});
                 
                 stop = next_stop;
                 ++bus_stop_id;
             }
 
-            graph_->AddEdge({(stops.back())->GetIndex(), bus_stop_id, {bus_wait_distance_, true, {}, (stops.back())->GetIndex(),(stops.back())->GetIndex()}});
-            graph_->AddEdge({bus_stop_id, (stops.back())->GetIndex(), {bus_wait_distance_, true, {}, (stops.back())->GetIndex(),(stops.back())->GetIndex()}});
+            edge_id = graph_->AddEdge({(stops.back())->GetIndex(), bus_stop_id, bus_wait_distance_});
+            StoreEdgeInfo(edge_id, {true, {}, (stops.back())->GetIndex(),(stops.back())->GetIndex(), bus_wait_distance_});
+            edge_id = graph_->AddEdge({bus_stop_id, (stops.back())->GetIndex(), bus_wait_distance_});
+            StoreEdgeInfo(edge_id, {true, {}, (stops.back())->GetIndex(),(stops.back())->GetIndex(), bus_wait_distance_});
 
             size_t bus_stop_id_go_back = bus_stop_id;
 
@@ -57,9 +83,10 @@ public:
                     size_t actual_stop_id = (*stop)->GetIndex();
                     size_t actual_next_stop_id = (*rnext_stop)->GetIndex();
 
-                    weight w{catalogue.GetDistance(*stop, *rnext_stop),false ,bus.GetName(), actual_stop_id, actual_next_stop_id};
+                    size_t distance = catalogue.GetDistance(*stop, *rnext_stop);
 
-                    graph_->AddEdge({bus_stop_id_go_back, bus_stop_id_go_back-1, w});
+                    edge_id = graph_->AddEdge({bus_stop_id_go_back, bus_stop_id_go_back-1, distance});
+                    StoreEdgeInfo(edge_id, {false ,bus.GetName(), actual_stop_id, actual_next_stop_id, distance});
 
                     stop = rnext_stop;
                     --bus_stop_id_go_back;
@@ -109,10 +136,11 @@ public:
 
         travel.lines.reserve(info->edges.size());
 
-        travel.total_time = DistanceToTime(info->weight.distance);
+        travel.total_time = DistanceToTime(info->weight);
+        
         
 
-        size_t from_stop = graph_->GetEdge(info->edges[0]).weight.from;
+        size_t from_stop = edge_infos_[info->edges[0]].from;
 
         travel.lines.push_back({Route_t::WAIT
                         ,catalogue_.GetStopByIndex(from_stop)->GetName()
@@ -125,17 +153,17 @@ public:
 
             RouteLine line;
 
-            from_stop = graph_->GetEdge(edgeID).weight.from;
+            from_stop = edge_infos_[edgeID].from;
 
-            if(graph_->GetEdge(edgeID).weight.is_waiting){
+            if(edge_infos_[edgeID].is_waiting){
                 line.type = Route_t::WAIT;
                 line.time = settings_.bus_wait_time;
                 line.name = catalogue_.GetStopByIndex(from_stop)->GetName();
                 ++begin; // there are 2 wait times per stop in the graph, skip one
             } else {
                 line.type = Route_t::BUS;
-                line.time = DistanceToTime(graph_->GetEdge(edgeID).weight.distance);
-                line.name = graph_->GetEdge(edgeID).weight.bus;
+                line.time = DistanceToTime(edge_infos_[edgeID].distance);
+                line.name = edge_infos_[edgeID].bus;
             }
 
             travel.lines.push_back(std::move(line));
@@ -184,12 +212,13 @@ private:
         }
     };
 
-    using Weight = weight;
+    using Weight = size_t;
 
     const TransportCatalogue& catalogue_;
     std::unique_ptr<graph::DirectedWeightedGraph<Weight>> graph_;
     std::unique_ptr<graph::Router<Weight>> router_;
     routing_settings_t settings_;
+    std::vector<EdgeInfo> edge_infos_;
 };
 
 } // namespace TC
