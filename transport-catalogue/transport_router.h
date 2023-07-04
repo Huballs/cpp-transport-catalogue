@@ -79,22 +79,28 @@ public:
         double time;
     };
 
-    struct Route{
+    struct Travel{
         std::vector<RouteLine> lines;
         double total_time;
     };
 
-    Route Route(std::string_view from, std::string_view to){
+    std::optional<Travel> Route(std::string_view from, std::string_view to){
         size_t index_from = catalogue_.GetStop(from)->GetIndex(); 
         size_t index_to = catalogue_.GetStop(to)->GetIndex();
 
         auto info = router_->BuildRoute(index_from, index_to);
 
-        std::vector<RouteLine> route_lines;
+        if(!info)
+            return std::nullopt;
+
+        Travel travel;
+
+        travel.total_time = DistanceToTime(info->weight.distance);
+        
 
         size_t from_stop = graph_->GetEdge(info->edges[0]).weight.from;
 
-        route_lines.push_back({Route_t::WAIT
+        travel.lines.push_back({Route_t::WAIT
                         ,catalogue_.GetStopByIndex(from_stop)->GetName()
                         ,static_cast<double>(settings_.bus_wait_time)
                         });
@@ -111,22 +117,20 @@ public:
                 line.type = Route_t::WAIT;
                 line.time = settings_.bus_wait_time;
                 line.name = catalogue_.GetStopByIndex(from_stop)->GetName();
-                ++begin; // there are 2 wait times in the graph, remove one
+                ++begin; // there are 2 wait times per stop in the graph, skip one
             } else {
                 line.type = Route_t::BUS;
                 line.time = DistanceToTime(graph_->GetEdge(edgeID).weight.distance);
                 line.name = graph_->GetEdge(edgeID).weight.bus;
             }
 
-            route_lines.push_back(std::move(line));
+            travel.lines.push_back(std::move(line));
 
         }
 
-        route_lines.erase(--route_lines.end());
+        travel.lines.erase(--travel.lines.end());
 
-        double total_time = DistanceToTime(info->weight.distance);
-
-        for(auto& r : route_lines){
+        for(auto& r : travel.lines){
             if(r.type == Route_t::WAIT){
                 std::cout << "wait: " << r.name << " t: " << r.time;
             } else {
@@ -134,9 +138,9 @@ public:
             }
             std::cout << std::endl;
         }
-        std::cout << "total: " << total_time << std::endl << std::endl;
+        std::cout << "total: " << travel.total_time << std::endl << std::endl;
 
-        return {route_lines, total_time};
+        return travel;
 
     }
 
