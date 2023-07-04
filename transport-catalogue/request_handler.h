@@ -89,6 +89,9 @@ class RequestHandler {
         routing_settings_t ReadRoutingSettings(Reader<Array, Dict, Node>& reader);
 
         template <typename OutputBuilder>
+        typename OutputBuilder::Node_t BuildRouteNode(int id, TransportRouter::Travel& travel);
+
+        template <typename OutputBuilder>
         typename OutputBuilder::Node_t BuildBusStatNode(int id, const stat_bus_t& bus_stat);
 
         template <typename OutputBuilder>
@@ -223,7 +226,12 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
             const auto& from = reader.GetFieldAsString(request_node, "from");
             const auto& to = reader.GetFieldAsString(request_node, "to");
 
-            router->Route(from, to);
+            auto route = router->Route(from, to);
+            if(route){
+                request_output = BuildRouteNode<OutputBuilder>(request_id, *route);
+            } else{
+                request_output = BuildNotFoundNode<OutputBuilder>(request_id);
+            }
            
         }
 
@@ -235,7 +243,7 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
 }
 
 template <typename Array, typename Dict, typename Node>
-routing_settings_t RequestHandler::ReadRoutingSettings(Reader<Array, Dict, Node>& reader){
+inline routing_settings_t RequestHandler::ReadRoutingSettings(Reader<Array, Dict, Node>& reader){
 
     const auto settings_map = reader.GetRequestNodesAsMap("routing_settings");
     routing_settings_t settings;
@@ -245,7 +253,7 @@ routing_settings_t RequestHandler::ReadRoutingSettings(Reader<Array, Dict, Node>
 }
 
 template <typename Array, typename Dict, typename Node>
-map_settings_t RequestHandler::ReadMapRenderSettings(Reader<Array, Dict, Node>& reader) {
+inline map_settings_t RequestHandler::ReadMapRenderSettings(Reader<Array, Dict, Node>& reader) {
 
     const auto settings_map = reader.GetRequestNodesAsMap("render_settings");
 
@@ -279,7 +287,57 @@ map_settings_t RequestHandler::ReadMapRenderSettings(Reader<Array, Dict, Node>& 
 }
 
 template <typename OutputBuilder>
-typename OutputBuilder::Node_t RequestHandler::BuildBusStatNode(int id, const stat_bus_t& bus_stat){
+inline typename OutputBuilder::Node_t RequestHandler::BuildRouteNode(int id, TransportRouter::Travel& travel){
+
+    using namespace std::string_literals;
+
+    typename OutputBuilder::Array_t items;
+
+    std::optional<typename OutputBuilder::Dict_t> item;
+
+    int span_count = 1;
+
+    for(const auto& t : travel.lines){
+        if(t.type == TransportRouter::Route_t::WAIT){
+            if(item){
+                items.push_back(std::move(*item));
+            }
+            item = typename OutputBuilder::Dict_t{};
+        
+            (*item)["stop_name"] = std::string(t.name);
+            (*item)["time"] = t.time;
+            (*item)["type"] = "Wait"s;
+            items.push_back(std::move(*item));
+            item = std::nullopt;
+        } else
+        if(t.type == TransportRouter::Route_t::BUS){
+            if(!item){
+                span_count = 1;
+                item = typename OutputBuilder::Dict_t{};
+                (*item)["bus"] = std::string(t.name);
+                (*item)["span_count"] = span_count;
+                (*item)["time"] = t.time;
+                (*item)["type"] = "Bus"s;
+            } else{
+                ++span_count;
+                (*item)["span_count"] = span_count;
+            }
+        }
+    }
+
+    if(item){
+        items.push_back(std::move(*item));
+    }
+
+    return OutputBuilder{}.StartDict()
+        .Key("items").Value(items)
+        .Key("request_id").Value(id)
+        .Key("total_time").Value(travel.total_time)
+        .EndDict().Build();
+}
+
+template <typename OutputBuilder>
+inline typename OutputBuilder::Node_t RequestHandler::BuildBusStatNode(int id, const stat_bus_t& bus_stat){
     return OutputBuilder{}.StartDict()
             .Key("request_id").Value(id)
             .Key("curvature").Value(bus_stat.curvature)
@@ -290,7 +348,7 @@ typename OutputBuilder::Node_t RequestHandler::BuildBusStatNode(int id, const st
 }
 
 template <typename OutputBuilder>
-typename OutputBuilder::Node_t RequestHandler::BuildStopStatNode(int id, const stat_stop_t& stop_stat){
+inline typename OutputBuilder::Node_t RequestHandler::BuildStopStatNode(int id, const stat_stop_t& stop_stat){
     typename OutputBuilder::Array_t stops;
                     
     for(const auto stop : stop_stat.buses){
@@ -304,7 +362,7 @@ typename OutputBuilder::Node_t RequestHandler::BuildStopStatNode(int id, const s
 }
 
 template <typename OutputBuilder>
-typename OutputBuilder::Node_t RequestHandler::BuildMapStatNode(int id, map_settings_t& map_settings){
+inline typename OutputBuilder::Node_t RequestHandler::BuildMapStatNode(int id, map_settings_t& map_settings){
     
     renderer_.SetSettings(map_settings);
 
@@ -318,10 +376,11 @@ typename OutputBuilder::Node_t RequestHandler::BuildMapStatNode(int id, map_sett
 }
 
 template <typename OutputBuilder>
-typename OutputBuilder::Node_t RequestHandler::BuildNotFoundNode(int id){
+inline typename OutputBuilder::Node_t RequestHandler::BuildNotFoundNode(int id){
+    using namespace std::string_literals;
     return OutputBuilder{}.StartDict()
             .Key("request_id").Value(id)
-            .Key("error_message").Value("not found")
+            .Key("error_message").Value("not found"s)
             .EndDict().Build();
 }
 

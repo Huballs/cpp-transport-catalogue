@@ -97,7 +97,10 @@ namespace TC {
     }
 
     Stop* TransportCatalogue::GetStop(std::string_view name) const{
-        return stopname_to_stops_.at(name);
+        auto it = stopname_to_stops_.find(name);
+        if(it == stopname_to_stops_.end())
+            return nullptr;
+        return it->second;
     }
 
     const std::deque<Bus>& TransportCatalogue::GetBuses() const{

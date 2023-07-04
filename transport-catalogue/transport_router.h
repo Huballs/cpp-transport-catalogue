@@ -12,7 +12,9 @@ class TransportRouter {
 public:
     TransportRouter(const TransportCatalogue& catalogue, routing_settings_t settings) : catalogue_(catalogue), settings_(std::move(settings)){
 
-        graph_ = std::make_unique<graph::DirectedWeightedGraph<Weight>>(catalogue.GetStops().size()*10);
+        size_t graph_stops_count = catalogue.GetStops().size()*2 + catalogue.GetBuses().size() * catalogue.GetStops().size();
+
+        graph_ = std::make_unique<graph::DirectedWeightedGraph<Weight>>(graph_stops_count);
 
         size_t bus_wait_distance_ = 1.0 * settings_.bus_wait_time / 60 * settings_.bus_velocity *1000 / 2; // bus wait time converted to distance
 
@@ -40,8 +42,8 @@ public:
                 ++bus_stop_id;
             }
 
-            graph_->AddEdge({(stops.back())->GetIndex(), bus_stop_id, {bus_wait_distance_, true, {}, (stops.back())->GetIndex()}});
-            graph_->AddEdge({bus_stop_id, (stops.back())->GetIndex(), {bus_wait_distance_, true, {}, (stops.back())->GetIndex()}});
+            graph_->AddEdge({(stops.back())->GetIndex(), bus_stop_id, {bus_wait_distance_, true, {}, (stops.back())->GetIndex(),(stops.back())->GetIndex()}});
+            graph_->AddEdge({bus_stop_id, (stops.back())->GetIndex(), {bus_wait_distance_, true, {}, (stops.back())->GetIndex(),(stops.back())->GetIndex()}});
 
             size_t bus_stop_id_go_back = bus_stop_id;
 
@@ -85,8 +87,18 @@ public:
     };
 
     std::optional<Travel> Route(std::string_view from, std::string_view to){
-        size_t index_from = catalogue_.GetStop(from)->GetIndex(); 
-        size_t index_to = catalogue_.GetStop(to)->GetIndex();
+
+        if(from == to)
+            return Travel{{}, 0};
+
+        auto stop_from = catalogue_.GetStop(from);
+        auto stop_to = catalogue_.GetStop(to);
+
+        if(!stop_from || !stop_to)
+            return std::nullopt;
+
+        size_t index_from = stop_from->GetIndex(); 
+        size_t index_to = stop_to->GetIndex();
 
         auto info = router_->BuildRoute(index_from, index_to);
 
@@ -94,6 +106,8 @@ public:
             return std::nullopt;
 
         Travel travel;
+
+        travel.lines.reserve(info->edges.size());
 
         travel.total_time = DistanceToTime(info->weight.distance);
         
@@ -129,7 +143,7 @@ public:
         }
 
         travel.lines.erase(--travel.lines.end());
-
+/*
         for(auto& r : travel.lines){
             if(r.type == Route_t::WAIT){
                 std::cout << "wait: " << r.name << " t: " << r.time;
@@ -138,7 +152,7 @@ public:
             }
             std::cout << std::endl;
         }
-        std::cout << "total: " << travel.total_time << std::endl << std::endl;
+        std::cout << "total: " << travel.total_time << std::endl << std::endl;*/
 
         return travel;
 
@@ -164,7 +178,8 @@ private:
             return distance < other.distance;
         }
         weight operator+(const weight& other) const{
-            weight w{distance + other.distance};
+            weight w;
+            w.distance = distance + other.distance;
             return w;
         }
     };
