@@ -89,7 +89,7 @@ class RequestHandler {
         routing_settings_t ReadRoutingSettings(Reader<Array, Dict, Node>& reader);
 
         template <typename OutputBuilder>
-        typename OutputBuilder::Node_t BuildRouteNode(int id, TransportRouter::Travel& travel);
+        typename OutputBuilder::Node_t BuildRouteNode(int id, const TransportRouter::Travel& travel);
 
         template <typename OutputBuilder>
         typename OutputBuilder::Node_t BuildBusStatNode(int id, const stat_bus_t& bus_stat);
@@ -223,10 +223,10 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
                 router = std::make_unique<TransportRouter>(db_, *routing_settings);
             }
 
-            const auto& from = reader.GetFieldAsString(request_node, "from");
-            const auto& to = reader.GetFieldAsString(request_node, "to");
+            const auto from = reader.GetFieldAsString(request_node, "from");
+            const auto to = reader.GetFieldAsString(request_node, "to");
 
-            auto route = router->Route(from, to);
+            const auto route = router->Route(from, to);
             if(route){
                 request_output = BuildRouteNode<OutputBuilder>(request_id, *route);
             } else{
@@ -287,46 +287,29 @@ inline map_settings_t RequestHandler::ReadMapRenderSettings(Reader<Array, Dict, 
 }
 
 template <typename OutputBuilder>
-inline typename OutputBuilder::Node_t RequestHandler::BuildRouteNode(int id, TransportRouter::Travel& travel){
+inline typename OutputBuilder::Node_t RequestHandler::BuildRouteNode(int id, const TransportRouter::Travel& travel){
 
     using namespace std::string_literals;
 
     typename OutputBuilder::Array_t items;
 
-    std::optional<typename OutputBuilder::Dict_t> item;
-
-    int span_count = 1;
-
     for(const auto& t : travel.lines){
-        if(t.type == TransportRouter::Route_t::WAIT){
-            if(item){
-                items.push_back(std::move(*item));
-            }
-            item = typename OutputBuilder::Dict_t{};
-        
-            (*item)["stop_name"] = std::string(t.name);
-            (*item)["time"] = t.time;
-            (*item)["type"] = "Wait"s;
-            items.push_back(std::move(*item));
-            item = std::nullopt;
-        } else
-        if(t.type == TransportRouter::Route_t::BUS){
-            if(!item){
-                span_count = 1;
-                item = typename OutputBuilder::Dict_t{};
-                (*item)["bus"] = std::string(t.name);
-                (*item)["span_count"] = span_count;
-                (*item)["time"] = t.time;
-                (*item)["type"] = "Bus"s;
-            } else{
-                ++span_count;
-                (*item)["span_count"] = span_count;
-            }
-        }
-    }
 
-    if(item){
-        items.push_back(std::move(*item));
+        typename OutputBuilder::Dict_t item;
+
+        if(t.type == TransportRouter::RouteLine_t::BUS){
+            (item)["bus"] = std::string(t.name);
+            (item)["span_count"] = static_cast<uint32_t>(t.span_count);
+            (item)["time"] = t.time;
+            (item)["type"] = "Bus"s;
+            
+        } else
+        if(t.type == TransportRouter::RouteLine_t::WAIT){
+            (item)["stop_name"] = std::string(t.name);
+            (item)["time"] = t.time;
+            (item)["type"] = "Wait"s;
+        }
+        items.push_back(std::move(item));
     }
 
     return OutputBuilder{}.StartDict()
