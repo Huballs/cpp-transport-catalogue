@@ -87,7 +87,7 @@ private:
     routing_settings_t settings_;
     std::vector<EdgeInfo> edge_infos_;
 
-    static constexpr double distanceTimeMulti = 1000.0/60.0;
+    static constexpr double distanceTimeMulti = 1000.0/60.0; //(meters in km)/(minutes in h)
 
     const size_t bus_wait_distance_ = 1.0 * settings_.bus_wait_time_min * settings_.bus_velocity_kmh * distanceTimeMulti;
 };
