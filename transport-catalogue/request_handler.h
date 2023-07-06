@@ -247,8 +247,8 @@ inline routing_settings_t RequestHandler::ReadRoutingSettings(Reader<Array, Dict
 
     const auto settings_map = reader.GetRequestNodesAsMap("routing_settings");
     routing_settings_t settings;
-    settings.bus_velocity = reader.GetFieldAsInt(settings_map, "bus_velocity");
-    settings.bus_wait_time = reader.GetFieldAsInt(settings_map, "bus_wait_time");
+    settings.bus_velocity_kmh = reader.GetFieldAsInt(settings_map, "bus_velocity");
+    settings.bus_wait_time_min = reader.GetFieldAsInt(settings_map, "bus_wait_time");
     return settings;
 }
 
@@ -300,13 +300,13 @@ inline typename OutputBuilder::Node_t RequestHandler::BuildRouteNode(int id, con
         if(t.type == TransportRouter::RouteLine_t::BUS){
             (item)["bus"] = std::string(t.name);
             (item)["span_count"] = static_cast<uint32_t>(t.span_count);
-            (item)["time"] = t.time;
+            (item)["time"] = t.time_min;
             (item)["type"] = "Bus"s;
             
         } else
         if(t.type == TransportRouter::RouteLine_t::WAIT){
             (item)["stop_name"] = std::string(t.name);
-            (item)["time"] = t.time;
+            (item)["time"] = t.time_min;
             (item)["type"] = "Wait"s;
         }
         items.push_back(std::move(item));
@@ -315,7 +315,7 @@ inline typename OutputBuilder::Node_t RequestHandler::BuildRouteNode(int id, con
     return OutputBuilder{}.StartDict()
         .Key("items").Value(items)
         .Key("request_id").Value(id)
-        .Key("total_time").Value(travel.total_time)
+        .Key("total_time").Value(travel.total_time_min)
         .EndDict().Build();
 }
 

@@ -28,8 +28,8 @@ namespace TC {
     };
 
     struct routing_settings_t{
-        int bus_velocity;   // km/h
-        int bus_wait_time;  // minutes
+        int bus_velocity_kmh;   // km/h
+        int bus_wait_time_min;  // minutes
     };
 
     template <typename Array, typename Dict, typename Node>

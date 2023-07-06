@@ -1,3 +1,5 @@
+#pragma once
+
 #include "transport_catalogue.h"
 #include "router.h"
 #include "domain.h"
@@ -8,25 +10,7 @@ namespace TC {
 class TransportRouter {
 
 public:
-    TransportRouter(const TransportCatalogue& catalogue, routing_settings_t settings) : catalogue_(catalogue), settings_(std::move(settings)){
-
-        graph_ = std::make_unique<graph::DirectedWeightedGraph<Weight>>();
-
-        for(const auto& bus : catalogue_.GetBuses()){
-
-            const auto& stops = bus.GetStops();
-
-            AddStopsToGraph(stops.begin(), stops.end(), bus.GetName());
-
-            if(!bus.IsCircular()) {
-
-                AddStopsToGraph(stops.rbegin(), stops.rend(), bus.GetName());
-
-            }
-        }
-        
-        router_ = std::make_unique<graph::Router<Weight>>(*graph_);
-    }
+    TransportRouter(const TransportCatalogue& catalogue, routing_settings_t settings);
 
     enum class RouteLine_t{
         WAIT,
@@ -36,69 +20,20 @@ public:
     struct RouteLine{
         RouteLine_t type;
         std::string_view name;
-        double time;
+        double time_min;   // time in minutes
         size_t span_count;
     };
 
     struct Travel{
         std::vector<RouteLine> lines;
-        double total_time;
+        double total_time_min;
     };
 
-    std::optional<Travel> Route(std::string_view from, std::string_view to){
+    std::optional<Travel> Route(std::string_view from, std::string_view to);
 
-        if(from == to)
-            return Travel{{}, 0};
-
-        auto stop_from = catalogue_.GetStop(from);
-        auto stop_to = catalogue_.GetStop(to);
-
-        if(!stop_from || !stop_to || !stop_from->GetBusCount() || !stop_to->GetBusCount())
-            return std::nullopt;
-
-        size_t index_from = stop_from->GetIndex(); 
-        size_t index_to = stop_to->GetIndex();
-
-        auto info = router_->BuildRoute(index_from, index_to);
-
-        if(!info)
-            return std::nullopt;
-
-        Travel travel;
-
-        travel.lines.reserve(info->edges.size());
-
-        travel.total_time = DistanceToTime(info->weight);
-
-        for(auto begin = (info->edges.begin()); begin < info->edges.end(); ++begin ){
-            
-            auto edgeID = *begin;
-
-            RouteLine line;
-
-            index_from = edge_infos_[edgeID].from;
-
-            travel.lines.push_back({RouteLine_t::WAIT
-                ,catalogue_.GetStopByIndex(index_from)->GetName()
-                ,static_cast<double>(settings_.bus_wait_time)
-                ,0
-                });
-
-            line.type = RouteLine_t::BUS;
-            line.time = DistanceToTime(edge_infos_[edgeID].distance);
-            line.name = edge_infos_[edgeID].bus;
-            line.span_count = edge_infos_[edgeID].span_count;
-
-            travel.lines.push_back(std::move(line));
-
-        }
-
-        return travel;
-
-    }
-
-    inline double DistanceToTime(size_t distance){
-        return 1.0 * distance  / settings_.bus_velocity /1000 *60;
+    // convert distance in meters to time traveled in minutes
+    inline double DistanceToTime(size_t distance_m){
+        return 1.0 * distance_m  / settings_.bus_velocity_kmh / distanceTimeMulti;
     }
 
 private:
@@ -107,7 +42,7 @@ private:
         std::string_view bus;
         size_t from;
         size_t to;
-        size_t distance;
+        size_t distance_m;
         size_t span_count;
     };
 
@@ -134,7 +69,7 @@ private:
                 edge_info.bus = bus_name;
                 edge_info.from = (*stop)->GetIndex();
                 edge_info.to = (*stop2)->GetIndex();
-                edge_info.distance = distance;
+                edge_info.distance_m = distance;
                 edge_info.span_count = span_count++;
                 StoreEdgeInfo(edge_id, edge_info);
 
@@ -152,7 +87,9 @@ private:
     routing_settings_t settings_;
     std::vector<EdgeInfo> edge_infos_;
 
-    const size_t bus_wait_distance_ = 1.0 * settings_.bus_wait_time / 60 * settings_.bus_velocity *1000;
+    static constexpr double distanceTimeMulti = 1000.0/60.0;
+
+    const size_t bus_wait_distance_ = 1.0 * settings_.bus_wait_time_min * settings_.bus_velocity_kmh * distanceTimeMulti;
 };
 
 } // namespace TC
