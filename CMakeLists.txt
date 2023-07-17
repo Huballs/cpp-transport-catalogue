@@ -1,12 +1,16 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.10)
 project(bus-manager)
 
 add_definitions("-std=c++17")
 
 set(CMAKE_COLOR_DIAGNOSTICS ON)
-#set(DCMAKE_PREFIX_PATH "C:\\msys64\\ucrt64\\include\\tbb")
 
-#find_package(TBB REQUIRED)
+set(CMAKE_PREFIX_PATH "/home/john/vscode/Protobuf/")
+
+find_package(Protobuf REQUIRED)
+find_package(Threads REQUIRED)
+
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS transport-catalogue/transport_catalogue.proto)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     add_compile_options(-fdiagnostics-color=always)
@@ -15,33 +19,31 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 set (CMAKE_VERBOSE_MAKEFILE ON)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wshadow")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-if (UNIX)
-    #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ltbb -lpthread") 
-endif (UNIX)
-
-if(CMAKE_VERSION VERSION_LESS "3.7.0")
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-endif()
-
-
-add_executable(bus-manager transport-catalogue/main.cpp
-    transport-catalogue/input_reader.cpp
-    transport-catalogue/stat_reader.cpp
-    transport-catalogue/transport_catalogue.cpp
-    transport-catalogue/json.cpp
-    transport-catalogue/svg.cpp
-    transport-catalogue/json_reader.cpp
-    transport-catalogue/request_handler.cpp
-    transport-catalogue/map_renderer.cpp
-    transport-catalogue/json_builder.cpp
-    transport-catalogue/transport_router.cpp
+set(BUS_MANAGER_FILES transport-catalogue/main.cpp
+                        transport-catalogue/input_reader.cpp
+                        transport-catalogue/stat_reader.cpp
+                        transport-catalogue/transport_catalogue.cpp
+                        transport-catalogue/json.cpp
+                        transport-catalogue/svg.cpp
+                        transport-catalogue/json_reader.cpp
+                        transport-catalogue/request_handler.cpp
+                        transport-catalogue/map_renderer.cpp
+                        transport-catalogue/json_builder.cpp
+                        transport-catalogue/transport_router.cpp
+                        transport-catalogue/seriallization.cpp
 )
 
-#target_link_libraries(search-server PRIVATE TBB::tbb)
+add_executable(bus-manager  ${PROTO_SRCS} 
+                            ${PROTO_HDRS} 
+                            ${BUS_MANAGER_FILES})
 
-add_custom_command(TARGET ${PROJECT_NAME}
-        POST_BUILD
-    
-        COMMAND ${CMAKE_OBJDUMP} -h -S $<TARGET_FILE:${PROJECT_NAME}> > ${PROJECT_NAME}.lst)
+target_include_directories(bus-manager  PUBLIC ${Protobuf_INCLUDE_DIRS})
+target_include_directories(bus-manager  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
+string(REPLACE "protobuf.lib" "protobufd.lib" "Protobuf_LIBRARY_DEBUG" "${Protobuf_LIBRARY_DEBUG}")
+string(REPLACE "protobuf.a" "protobufd.a" "Protobuf_LIBRARY_DEBUG" "${Protobuf_LIBRARY_DEBUG}")
+
+target_link_libraries(bus-manager "$<IF:$<CONFIG:Debug>,${Protobuf_LIBRARY_DEBUG},${Protobuf_LIBRARY}>" Threads::Threads)
+

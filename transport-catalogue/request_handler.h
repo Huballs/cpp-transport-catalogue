@@ -18,19 +18,6 @@ class RequestHandler {
     
     public:
 
-        struct base_request_t {
-            std::string_view type;
-            std::string_view name;
-
-            std::vector<std::string_view> stops;
-            bool is_roundtrip = false;
-
-            double latitude;
-            double longitude;
-
-            std::unordered_map<std::string_view, uint32_t> road_distances;
-        };
-
         struct stat_bus_t{
             double curvature;
             uint32_t length;

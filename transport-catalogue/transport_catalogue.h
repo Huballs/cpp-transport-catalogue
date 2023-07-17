@@ -84,7 +84,7 @@ namespace TC {
         uint32_t GetDistance(Stop* stop1, Stop* stop2) const;
 
         void AddStop(std::string_view name, const Coordinates& coordinates);
-
+        
         /* stops - <vector<string>, isCircular> */
         void AddRoute(std::string_view name, const std::pair<std::vector<std::string_view>, bool>& stops);
 
