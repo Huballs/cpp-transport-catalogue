@@ -80,8 +80,6 @@ class RequestHandler {
         TransportCatalogue& db_;
         Renderer& renderer_;
 
-        //using reader_typenames = typename Array, typename Dict, typename Node;
-
         template <typename Array, typename Dict, typename Node>
         map_settings_t ReadMapRenderSettings(Reader<Array, Dict, Node>& reader);
 
