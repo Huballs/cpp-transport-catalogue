@@ -27,6 +27,7 @@ namespace TC {
 
         const std::set<std::string_view>& GetBuses() const {return buses;}
         std::string_view GetName() const { return name;}
+        const std::string& GetNameStr() const {return name;}
         Coordinates getCoordinates() const { return coordinates;}
         size_t GetBusCount() const { return buses.size();}
         size_t GetIndex() const {return index;}
@@ -50,6 +51,7 @@ namespace TC {
         explicit Bus(const std::string& _name) : name(_name){};
 
         std::string_view GetName() const { return name;}
+        const std::string& GetNameStr() const {return name;}
         double GetLengthDirect() const {return length_direct;}
         uint32_t GetLengthTraveled() const {return length_traveled;}
         double GetCurvature() const {return curvature;}

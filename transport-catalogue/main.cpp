@@ -20,6 +20,7 @@ int main() {
 #include "json_reader.h"
 #include "request_handler.h"
 #include "json_builder.h"
+#include "seriallization.h"
 
 using namespace std::literals;
 
@@ -45,6 +46,10 @@ int main(int argc, char* argv[]) {
         TC::Input::JSONReader reader(std::cin);
         
         request_handler.ReadRequests(std::cout, reader, json::Builder{});
+
+        //auto file_name = request_handler.ReadSerializationSettings(reader);
+
+        //TC::SeriallizeTC(catalogue, file_name);
 
     } else if (mode == "process_requests"sv) {
 

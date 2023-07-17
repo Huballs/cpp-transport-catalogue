@@ -10,6 +10,9 @@
 #include "map_renderer.h"
 #include "transport_router.h"
 
+
+#include <iostream>
+
 namespace TC {
 
 #define READER_TYPENAMES typename Array, typename Dict, typename Node
@@ -59,6 +62,9 @@ class RequestHandler {
         std::vector<const Bus*> GetBusesAscendingName() const;
         std::vector<const Stop*> GetStopsAscendingName() const;
 
+        template <typename Array, typename Dict, typename Node>
+        inline std::string_view ReadSerializationSettings(Reader<Array, Dict, Node>& reader);
+
     private:
 
         std::vector<base_request_t> requests_add_stop;
@@ -68,10 +74,10 @@ class RequestHandler {
         Renderer& renderer_;
 
         template <typename Array, typename Dict, typename Node>
-        map_settings_t ReadMapRenderSettings(Reader<Array, Dict, Node>& reader);
+        routing_settings_t ReadRoutingSettings(Reader<Array, Dict, Node>& reader);
 
         template <typename Array, typename Dict, typename Node>
-        routing_settings_t ReadRoutingSettings(Reader<Array, Dict, Node>& reader);
+        map_settings_t ReadMapRenderSettings(Reader<Array, Dict, Node>& reader);
 
         template <typename OutputBuilder>
         typename OutputBuilder::Node_t BuildRouteNode(int id, const TransportRouter::Travel& travel);
@@ -158,7 +164,9 @@ void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node
 
     FulfillAddRequests();
 
-    ReadStatRequests(output, reader, OutputBuilder{});
+    auto tc_filename = ReadSerializationSettings(reader);
+
+    //ReadStatRequests(output, reader, OutputBuilder{});
 }
 
 template <typename Array, typename Dict, typename Node, typename OutputBuilder>
@@ -225,6 +233,19 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
     }
 
     OutputBuilder{}.Value(array_output).Print(output);
+}
+
+template <typename Array, typename Dict, typename Node>
+inline std::string_view RequestHandler::ReadSerializationSettings(Reader<Array, Dict, Node>& reader){
+
+    const auto settings_map = reader.GetRequestNodesAsMap("serialization_settings");
+
+    std::string_view file_name = reader.GetFieldAsString(settings_map, "file");
+
+    std::cout << file_name << std::endl;
+
+    return file_name;
+
 }
 
 template <typename Array, typename Dict, typename Node>

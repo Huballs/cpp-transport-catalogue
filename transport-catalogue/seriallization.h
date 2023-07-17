@@ -5,6 +5,6 @@
 
 namespace TC{
 
-    void SeriallizeTC(const TransportCatalogue& catalogue);
+    void SeriallizeTC(const TransportCatalogue& catalogue, std::string_view file_name);
 
 }
