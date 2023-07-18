@@ -1,15 +1,15 @@
 #pragma once
 
-#include "transport_catalogue.h"
+
 #include <optional>
 #include <unordered_set>
 #include <map>
-#include <memory>
+#include <optional>
 #include <sstream>
 #include "domain.h"
 #include "map_renderer.h"
+#include "transport_catalogue.h"
 #include "transport_router.h"
-
 
 #include <iostream>
 
@@ -37,10 +37,10 @@ class RequestHandler {
             const std::set<std::string_view>& buses;
         };
         
-        RequestHandler(TransportCatalogue& db, Renderer& renderer) : db_(db), renderer_(renderer){};
+        RequestHandler(TransportCatalogue& db, Renderer *renderer = nullptr) : db_(db), renderer_(renderer){};
 
-        template <typename Array, typename Dict, typename Node, typename OutputBuilder>
-        void ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder);
+        template <typename Array, typename Dict, typename Node>
+        void ReadRequests(Reader<Array, Dict, Node>& reader);
 
         template <typename Array, typename Dict, typename Node, typename OutputBuilder>
         void ReadStatRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder);
@@ -71,7 +71,7 @@ class RequestHandler {
         std::vector<base_request_t> requests_add_bus;
 
         TransportCatalogue& db_;
-        Renderer& renderer_;
+        Renderer *renderer_;
 
         template <typename Array, typename Dict, typename Node>
         routing_settings_t ReadRoutingSettings(Reader<Array, Dict, Node>& reader);
@@ -110,7 +110,7 @@ namespace detail {
                 color.green = color_array[1].AsInt();
                 color.blue = color_array[2].AsInt();
                 return color;
-            } else 
+            }  
             if (color_array.size() == 4){
                 svg::Rgba color;
                 color.red = color_array[0].AsInt();
@@ -128,8 +128,8 @@ namespace detail {
 } // namespace detail
 
 
-template <typename Array, typename Dict, typename Node, typename OutputBuilder>
-void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node>& reader, OutputBuilder){
+template <typename Array, typename Dict, typename Node>
+void RequestHandler::ReadRequests(Reader<Array, Dict, Node>& reader){
 
     const auto request_nodes = reader.GetRequestNodesAsArray("base_requests");
 
@@ -163,8 +163,6 @@ void RequestHandler::ReadRequests(std::ostream& output, Reader<Array, Dict, Node
     }
 
     FulfillAddRequests();
-
-    auto tc_filename = ReadSerializationSettings(reader);
 
     //ReadStatRequests(output, reader, OutputBuilder{});
 }
@@ -236,15 +234,11 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
 }
 
 template <typename Array, typename Dict, typename Node>
-inline std::string_view RequestHandler::ReadSerializationSettings(Reader<Array, Dict, Node>& reader){
+std::string_view RequestHandler::ReadSerializationSettings(Reader<Array, Dict, Node>& reader){
 
-    const auto settings_map = reader.GetRequestNodesAsMap("serialization_settings");
+    const auto& settings_map = reader.GetRequestNodesAsMap("serialization_settings");
 
-    std::string_view file_name = reader.GetFieldAsString(settings_map, "file");
-
-    std::cout << file_name << std::endl;
-
-    return file_name;
+    return reader.GetFieldAsString(settings_map, "file");
 
 }
 
@@ -353,10 +347,10 @@ inline typename OutputBuilder::Node_t RequestHandler::BuildStopStatNode(int id, 
 template <typename OutputBuilder>
 inline typename OutputBuilder::Node_t RequestHandler::BuildMapStatNode(int id, map_settings_t& map_settings){
     
-    renderer_.SetSettings(map_settings);
+    renderer_->SetSettings(map_settings);
 
     std::stringstream stream;
-    renderer_.Render(GetBusesAscendingName(), GetStopsAscendingName(), stream);
+    renderer_->Render(GetBusesAscendingName(), GetStopsAscendingName(), stream);
 
     return OutputBuilder{}.StartDict()
             .Key("request_id").Value(id)

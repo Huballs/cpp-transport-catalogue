@@ -2,15 +2,13 @@
 #include "input_reader.h"
 #include <iomanip> /* for setprecision(6) */
 
-namespace TC {
-
-    namespace Output {
+namespace TC::Output {
 
         void StatReader(TransportCatalogue& catalogue, std::istream& input, std::ostream& output){
             
             using namespace std::string_view_literals;
 
-            int n_queries;
+            int n_queries = 0;
 
             input >> n_queries;
             std::string line;
@@ -26,7 +24,7 @@ namespace TC {
                         output << "Bus " << command.second << ": not found" << std::endl;
                         continue;
                     }
-                    auto bus = catalogue.GetBus(command.second);
+                    auto *bus = catalogue.GetBus(command.second);
 
                     output << std::fixed << std::showpoint;
                     output << std::setprecision(6);
@@ -46,7 +44,7 @@ namespace TC {
                         output << "not found" << std::endl;
                         continue;
                     } 
-                    auto stop = catalogue.GetStop(command.second);
+                    auto *stop = catalogue.GetStop(command.second);
                     if(stop->GetBuses().empty()){
                         output << "no buses" << std::endl;
                         continue;
@@ -60,5 +58,4 @@ namespace TC {
                 }
             }
         }
-    } // namespace Output
-} // namespace TC
+} // namespace TC::Output

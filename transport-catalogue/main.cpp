@@ -28,6 +28,7 @@ void PrintUsage(std::ostream& stream = std::cerr) {
     stream << "Usage: transport_catalogue [make_base|process_requests]\n"sv;
 }
 
+
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         PrintUsage();
@@ -39,21 +40,24 @@ int main(int argc, char* argv[]) {
     if (mode == "make_base"sv) {
 
         TC::TransportCatalogue catalogue;
-        TC::MapRenderer renderer;
-
-        TC::RequestHandler request_handler(catalogue, renderer);
-
+        TC::RequestHandler request_handler(catalogue);
         TC::Input::JSONReader reader(std::cin);
         
-        request_handler.ReadRequests(std::cout, reader, json::Builder{});
+        request_handler.ReadRequests(reader);
 
-        //auto file_name = request_handler.ReadSerializationSettings(reader);
+        auto file_name = request_handler.ReadSerializationSettings(reader);
 
-        //TC::SeriallizeTC(catalogue, file_name);
+        TC::SeriallizeTC(catalogue, file_name);
 
     } else if (mode == "process_requests"sv) {
 
-        // process requests here
+        TC::TransportCatalogue catalogue;
+        TC::RequestHandler request_handler(catalogue);
+        TC::Input::JSONReader reader(std::cin);
+
+        auto file_name = request_handler.ReadSerializationSettings(reader);
+
+        TC::DeseriallizeTC(catalogue, file_name);
 
     } else {
         PrintUsage();

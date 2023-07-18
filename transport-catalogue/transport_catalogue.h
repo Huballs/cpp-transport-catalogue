@@ -39,8 +39,8 @@ namespace TC {
 
         friend TransportCatalogue;
 
-        int stops_count = 0;
-        int stops_unique_count = 0;
+        uint32_t stops_count = 0;
+        uint32_t stops_unique_count = 0;
         double length_direct = 0;
         uint32_t length_traveled = 0;
         double curvature = 0;
@@ -59,6 +59,13 @@ namespace TC {
         int GetStopsCountUnique() const {return stops_unique_count;}
         bool IsCircular() const {return isCircle;}
         const std::deque<Stop*>& GetStops() const {return stops;}
+    };
+
+    struct StopsListForRoute{
+        bool by_name = false;
+        bool by_index = false;
+        bool is_circular;
+        std::vector<std::string_view> 
     };
 
     class TransportCatalogue {
@@ -83,6 +90,7 @@ namespace TC {
     public:
         
         void AddDistances(std::string_view name, const std::unordered_map<std::string_view, uint32_t>& stop_to_distance);
+        void AddDistance(size_t index_from, size_t index_to, uint32_t distance);
         uint32_t GetDistance(Stop* stop1, Stop* stop2) const;
 
         void AddStop(std::string_view name, const Coordinates& coordinates);

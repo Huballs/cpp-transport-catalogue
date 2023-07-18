@@ -22,7 +22,7 @@ Node LoadArray(istream& input) {
         throw ParsingError("Array error"s);
 
 
-    return Node(move(result));
+    return Node((result));
 }
 
 Node LoadNumber(std::istream& input) {
@@ -99,10 +99,9 @@ Node LoadNull(istream& input) {
     {
         if (nameNull.at(i) == input.get())
             continue;
-        else
-        {
-            throw ParsingError("Null parsing error");
-        }
+        
+        throw ParsingError("Null parsing error");
+        
     }
     return {};
 }
@@ -117,10 +116,8 @@ Node LoadBool(istream& input) {
     {
         if (name->at(i) == input.get())
             continue;
-        else
-        {
-            throw ParsingError("Bool parsing error");
-        }
+
+        throw ParsingError("Bool parsing error");
     }
     return Node(value);
 
@@ -142,7 +139,8 @@ Node LoadString(std::istream& input) {
             // Встретили закрывающую кавычку
             ++it;
             break;
-        } else if (ch == '\\') {
+        } 
+        if (ch == '\\') {
             // Встретили начало escape-последовательности
             ++it;
             if (it == end) {
@@ -204,19 +202,23 @@ Node LoadDict(istream& input) {
 }
 
 Node LoadNode(istream& input) {
-    char c;
+    char c = 0;
     input >> c;
 
     if (c == '[') {
         return LoadArray(input);
-    } else if (c == '{') {
+    } 
+     if (c == '{') {
         return LoadDict(input);
-    } else if (c == '"') {
+    }
+     if (c == '"') {
         return LoadString(input);
-    } else if (c == 'f' || c == 't') {
+    } 
+     if (c == 'f' || c == 't') {
         input.putback(c);
         return LoadBool(input);
-    } else if (c == 'n') {
+    } 
+     if (c == 'n') {
         input.putback(c);
         return LoadNull (input);
     } else {
@@ -243,13 +245,13 @@ Node::Node(uint32_t value) : value_(value) {
 Node::Node(double value) : value_(value) {
 }
 
-Node::Node(const std::string &value) : value_(move(value)) {
+Node::Node(const std::string &value) : value_((value)) {
 }
 
-Node::Node(const Array &value) : value_(move(value)) {
+Node::Node(const Array &value) : value_((value)) {
 }
 
-Node::Node(const Dict &value) : value_(move(value)){
+Node::Node(const Dict &value) : value_((value)){
 }
 
 
@@ -299,7 +301,7 @@ bool Node::AsBool() const {
 double Node::AsDouble() const {
     if(IsInt()){
         return static_cast<double>(std::get<int>(value_));
-    } else 
+    }  
     if (IsPureDouble()){
         return std::get<double>(value_);
     }
@@ -342,7 +344,7 @@ Document Load(istream& input) {
 }
 
 void Print(const Document& doc, std::ostream& output) {
-    auto root = doc.GetRoot();
+    const auto& root = doc.GetRoot();
     PrintNode(root, output);
 }
 
@@ -371,7 +373,7 @@ void PrintValue(std::nullptr_t, std::ostream& out) {
 }
 
 void PrintValue(double value, std::ostream& out) {
-    size_t t= cout.precision();
+    int t = cout.precision();
     out.precision(11);
     out << value;
     out.precision(t);

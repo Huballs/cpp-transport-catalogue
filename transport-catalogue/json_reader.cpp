@@ -40,12 +40,16 @@ namespace TC {
              return requests_node.AsMap();
         }
 
-        std::string_view JSONReader::GetFieldAsString(const json::Node& node, std::string_view name){
+        const std::string& JSONReader::GetFieldAsString(const json::Node& node, std::string_view name){
 
             if(!node.IsMap())
                 throw json::ParsingError("Json::reader bottom level base parsing error");
             
             return node.AsMap().at(std::string(name)).AsString();
+        }
+        const std::string& JSONReader::GetFieldAsString(const json::Dict& node, std::string_view name){
+            
+            return node.at(std::string(name)).AsString();
         }
 
         bool JSONReader::GetFieldAsBool(const json::Node& node, std::string_view name){

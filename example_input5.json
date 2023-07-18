@@ -1,7 +1,4 @@
 {
-    "serialization_settings": {
-        "file": "transport_catalogue.db"
-    },
     "base_requests": [
         {
             "is_roundtrip": true,
@@ -93,6 +90,9 @@
         ],
         "underlayer_width": 3,
         "width": 200
+    },
+    "serialization_settings": {
+        "file": "transport_catalogue.db"
     },
     "routing_settings": {
         "bus_velocity": 40,

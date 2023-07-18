@@ -52,7 +52,8 @@ namespace TC {
         virtual const Array& GetRequestNodesAsArray(std::string_view name) = 0;
         virtual const Dict& GetRequestNodesAsMap(std::string_view name) = 0;
 
-        virtual std::string_view GetFieldAsString(const Node& node, std::string_view name) = 0;
+        virtual const std::string& GetFieldAsString(const Node& node, std::string_view name) = 0;
+        virtual const std::string& GetFieldAsString(const Dict& node, std::string_view name) = 0;
         virtual bool GetFieldAsBool(const Node& node, std::string_view name) = 0;
         virtual double GetFieldAsDouble(const Node& node, std::string_view name) = 0;
         virtual int GetFieldAsInt(const Node& node, std::string_view name) = 0;

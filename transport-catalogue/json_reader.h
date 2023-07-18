@@ -15,7 +15,8 @@ namespace TC {
             const json::Array& GetRequestNodesAsArray(std::string_view name) override;
             const json::Dict& GetRequestNodesAsMap(std::string_view name) override;
 
-            std::string_view GetFieldAsString(const json::Node& node, std::string_view name) override;
+            const std::string& GetFieldAsString(const json::Node& node, std::string_view name) override;
+            const std::string& GetFieldAsString(const json::Dict& node, std::string_view name) override;
             bool GetFieldAsBool(const json::Node& node, std::string_view name) override;
             double GetFieldAsDouble(const json::Node& node, std::string_view name) override;
             int GetFieldAsInt(const json::Node& node, std::string_view name) override;

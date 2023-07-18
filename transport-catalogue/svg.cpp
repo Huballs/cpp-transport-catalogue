@@ -78,17 +78,17 @@ Text& Text::SetFontSize(uint32_t size){
 }
 
 Text& Text::SetFontFamily(std::string font_family){
-    font_family_ = font_family;
+    font_family_ = std::move(font_family);
     return *this;
 }
 
 Text& Text::SetFontWeight(std::string font_weight){
-    font_weight_ = font_weight;
+    font_weight_ = std::move(font_weight);
     return *this;
 }
 
 Text& Text::SetData(std::string data){
-    data_ = data;
+    data_ = std::move(data);
     return *this;
 }
 

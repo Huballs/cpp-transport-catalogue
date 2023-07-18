@@ -22,9 +22,16 @@ namespace TC {
         }
     }
 
+    void TransportCatalogue::AddDistance(size_t index_from, size_t index_to, uint32_t distance){
+        stops_distances_[{
+            const_cast<Stop*>(GetStopByIndex(index_from)), 
+            const_cast<Stop*>(GetStopByIndex(index_to))
+        }] = distance;
+    }
+
     void TransportCatalogue::AddStop(std::string_view name, const Coordinates& coordinates){
 
-        stops_.push_back(Stop{std::string(name), coordinates});
+        stops_.emplace_back(std::string(name), coordinates);
 
         stops_.back().index = stops_.size() - 1;
 
@@ -56,7 +63,7 @@ namespace TC {
             prev_stop = stored_stop;
         }
 
-        if(stops.second == true){
+        if(stops.second){
             bus->isCircle = true;
 
             bus->stops_count = bus->stops.size();

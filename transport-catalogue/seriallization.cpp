@@ -1,6 +1,9 @@
 #include "seriallization.h"
 #include <fstream>
 
+
+#include <iostream>
+
 namespace TC {
 
         namespace detail {
@@ -61,6 +64,22 @@ namespace TC {
 
         proto_catalogue.SerializeToOstream(&file);
 
+    }
+
+    void DeseriallizeTC(TransportCatalogue& catalogue, std::string_view file_name){
+        TC_PROTO::TransportCatalogue proto_catalogue;
+
+        std::ifstream file(std::string(file_name), std::ios::binary);
+
+        proto_catalogue.ParseFromIstream(&file);
+
+        for(const auto& stop : proto_catalogue.stops()){
+            catalogue.AddStop(stop.name(), {stop.latitude(), stop.longitude()});
+        }
+
+        for(const auto& dist : proto_catalogue.distances()){
+            catalogue.AddDistance(dist.start(), dist.end(), dist.distance());
+        }
     }
 
 }

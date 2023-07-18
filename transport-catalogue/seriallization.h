@@ -7,4 +7,5 @@ namespace TC{
 
     void SeriallizeTC(const TransportCatalogue& catalogue, std::string_view file_name);
 
+    void DeseriallizeTC(TransportCatalogue& catalogue, std::string_view file_name);
 }
