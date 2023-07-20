@@ -1,7 +1,22 @@
 #include "request_handler.h"
+#include "serialization.h"
 #include <algorithm>
 
 namespace TC {
+
+    void RequestHandler::SerializeToFile(std::string_view file_name){
+        TC_PROTO::TransportCatalogue* proto_transport = TransportCatalogueToProto(db_);
+        TC_PROTO::RenderSettings* proto_render_settings = RenderSettingsToProto(render_settings_);
+
+        TC_PROTO::BusManager bus_manager;
+
+        bus_manager.set_allocated_transport_catalogue(proto_transport);
+        bus_manager.set_allocated_render_settings(proto_render_settings);
+
+        std::ofstream file(std::string(file_name), std::ios::binary);
+
+        bus_manager.SerializeToOstream(&file);
+    }
 
     void RequestHandler::QueueAddRequest(base_request_t& request) {
 

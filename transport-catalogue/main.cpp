@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
 
         auto file_name = request_handler.ReadSerializationSettings(reader);
 
-        TC::SeriallizeTC(catalogue, file_name);
+        //TC::SeriallizeTC(catalogue, file_name);
 
     } else if (mode == "process_requests"sv) {
 

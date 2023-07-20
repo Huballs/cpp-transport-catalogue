@@ -62,6 +62,8 @@ class RequestHandler {
         std::vector<const Bus*> GetBusesAscendingName() const;
         std::vector<const Stop*> GetStopsAscendingName() const;
 
+        void SerializeToFile(std::string_view file_name);
+
         template <typename Array, typename Dict, typename Node>
         inline std::string_view ReadSerializationSettings(Reader<Array, Dict, Node>& reader);
 
@@ -72,6 +74,7 @@ class RequestHandler {
 
         TransportCatalogue& db_;
         Renderer *renderer_;
+        map_settings_t render_settings_;
 
         template <typename Array, typename Dict, typename Node>
         routing_settings_t ReadRoutingSettings(Reader<Array, Dict, Node>& reader);
@@ -164,6 +167,8 @@ void RequestHandler::ReadRequests(Reader<Array, Dict, Node>& reader){
 
     FulfillAddRequests();
 
+    render_settings_ = ReadMapRenderSettings(reader);
+
     //ReadStatRequests(output, reader, OutputBuilder{});
 }
 
@@ -203,8 +208,8 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
             }
         } else 
         if (reader.GetFieldAsString(request_node, "type") == "Map"){
-            auto map_renderer_settings = ReadMapRenderSettings(reader);
-            request_output = BuildMapStatNode<OutputBuilder>(request_id, map_renderer_settings);
+            //auto map_renderer_settings = ReadMapRenderSettings(reader);
+            request_output = BuildMapStatNode<OutputBuilder>(request_id, render_settings_);
         } else 
         if (reader.GetFieldAsString(request_node, "type") == "Route"){
             static std::optional<routing_settings_t> routing_settings;

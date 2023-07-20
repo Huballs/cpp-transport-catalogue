@@ -10,7 +10,11 @@ set(CMAKE_PREFIX_PATH "/home/john/vscode/Protobuf/")
 find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
 
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS transport-catalogue/transport_catalogue.proto)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS 
+                        transport-catalogue/transport_catalogue.proto
+                        transport-catalogue/map_renderer.proto
+                        transport-catalogue/svg.proto
+                        )
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     add_compile_options(-fdiagnostics-color=always)
