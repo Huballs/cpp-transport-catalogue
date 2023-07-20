@@ -24,8 +24,8 @@ namespace TC {
 
     void TransportCatalogue::AddDistance(size_t index_from, size_t index_to, uint32_t distance){
         stops_distances_[{
-            const_cast<Stop*>(GetStopByIndex(index_from)), 
-            const_cast<Stop*>(GetStopByIndex(index_to))
+            (GetStopByIndex(index_from)), 
+            (GetStopByIndex(index_to))
         }] = distance;
     }
 
@@ -39,20 +39,20 @@ namespace TC {
         
     }
 
-    void TransportCatalogue::AddRoute(std::string_view name, const std::pair<std::vector<std::string_view>, bool>& stops){
+    void TransportCatalogue::AddRoute(std::string_view name, const std::vector<size_t>& stops, bool is_circular){
 
         buses_.push_back(Bus((std::string(name))));
         Bus* bus = &buses_.back();
 
         std::unordered_set<std::string_view> unique_stops;
-        Stop* prev_stop = stopname_to_stops_[stops.first[0]];
+        Stop * prev_stop = GetStopByIndex(stops[0]);//stopname_to_stops_[stops.first[0]];
         Coordinates prev_coordinate = prev_stop->coordinates;
 
-        for (std::string_view stop : stops.first){
-            Stop* stored_stop = stopname_to_stops_[stop];
+        for (size_t stop_index : stops){
+            Stop * stored_stop = GetStopByIndex(stop_index);//stopname_to_stops_[stop];
 
             bus->stops.push_back(stored_stop);
-            unique_stops.insert(stop);
+            unique_stops.insert(stored_stop->GetName());
 
             stored_stop->buses.insert(bus->name);
 
@@ -63,7 +63,7 @@ namespace TC {
             prev_stop = stored_stop;
         }
 
-        if(stops.second){
+        if(is_circular){
             bus->isCircle = true;
 
             bus->stops_count = bus->stops.size();

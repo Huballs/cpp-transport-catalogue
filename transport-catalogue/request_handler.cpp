@@ -25,7 +25,13 @@ namespace TC {
         }
 
         for(const auto& request : requests_add_bus){
-            db_.AddRoute(request.name, {request.stops, request.is_roundtrip});
+            std::vector<size_t> indexed_stops;
+            indexed_stops.reserve(request.stops.size());
+
+            for(auto stop : request.stops){
+                indexed_stops.push_back(db_.GetStop(stop)->GetIndex());
+            }
+            db_.AddRoute(request.name, indexed_stops, request.is_roundtrip);
         }
 
     }

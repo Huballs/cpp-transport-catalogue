@@ -126,7 +126,15 @@ namespace TC {
         }
 
         for(const auto& [bus, stops] : bus_to_stops){
-            catalogue.AddRoute(bus, stops);
+
+            std::vector<size_t> indexed_stops;
+            indexed_stops.reserve(stops.first.size());
+
+            for(auto stop : stops.first){
+                indexed_stops.push_back(catalogue.GetStop(stop)->GetIndex());
+            }
+
+            catalogue.AddRoute(bus, indexed_stops, stops.second);
         }
 
     }

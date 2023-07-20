@@ -32,7 +32,7 @@ set(BUS_MANAGER_FILES transport-catalogue/main.cpp
                         transport-catalogue/map_renderer.cpp
                         transport-catalogue/json_builder.cpp
                         transport-catalogue/transport_router.cpp
-                        transport-catalogue/seriallization.cpp
+                        transport-catalogue/serialization.cpp
 )
 
 add_executable(bus-manager  ${PROTO_SRCS} 

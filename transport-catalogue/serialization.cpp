@@ -1,4 +1,4 @@
-#include "seriallization.h"
+#include "serialization.h"
 #include <fstream>
 
 
@@ -80,6 +80,18 @@ namespace TC {
         for(const auto& dist : proto_catalogue.distances()){
             catalogue.AddDistance(dist.start(), dist.end(), dist.distance());
         }
+
+        for(const auto& bus : proto_catalogue.buses()){
+            std::vector<size_t> indexed_stops;
+            indexed_stops.reserve(bus.stops_size());
+
+            for(size_t index : bus.stops()){
+                indexed_stops.push_back(index);
+            }
+
+            catalogue.AddRoute(bus.name(), indexed_stops, bus.is_roundtrip());
+        }
+        
     }
 
 }

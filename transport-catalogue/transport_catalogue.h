@@ -61,13 +61,6 @@ namespace TC {
         const std::deque<Stop*>& GetStops() const {return stops;}
     };
 
-    struct StopsListForRoute{
-        bool by_name = false;
-        bool by_index = false;
-        bool is_circular;
-        std::vector<std::string_view> 
-    };
-
     class TransportCatalogue {
 
     private:
@@ -95,8 +88,8 @@ namespace TC {
 
         void AddStop(std::string_view name, const Coordinates& coordinates);
         
-        /* stops - <vector<string>, isCircular> */
-        void AddRoute(std::string_view name, const std::pair<std::vector<std::string_view>, bool>& stops);
+        /* stops - list of stops(their index) */
+        void AddRoute(std::string_view name, const std::vector<size_t>& stops, bool is_circular);
 
         bool ContainsBus(std::string_view name) const;
         Bus* GetBus(std::string_view name) const;
@@ -111,7 +104,12 @@ namespace TC {
             return stops_distances_;
         }
 
-        const Stop* GetStopByIndex(size_t index) const{
+        Stop* GetStopByIndex(size_t index) {
+            return &(stops_[index]);
+        }
+
+
+        const Stop* GetStopByIndex(size_t index) const {
             return &(stops_[index]);
         }
 
