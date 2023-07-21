@@ -5,7 +5,11 @@ add_definitions("-std=c++17")
 
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 
-set(CMAKE_PREFIX_PATH "/home/john/vscode/Protobuf/")
+if (WIN32)
+    set(CMAKE_PREFIX_PATH "../protobuff/install/")
+else ()
+    set(CMAKE_PREFIX_PATH "/home/john/vscode/Protobuf/")
+endif ()
 
 find_package(Protobuf REQUIRED)
 find_package(Threads REQUIRED)
@@ -23,7 +27,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 set (CMAKE_VERBOSE_MAKEFILE ON)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -Wall -Wpedantic")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic")
 
 set(BUS_MANAGER_FILES transport-catalogue/main.cpp
                         transport-catalogue/input_reader.cpp

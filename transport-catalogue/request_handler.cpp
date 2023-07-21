@@ -18,6 +18,13 @@ namespace TC {
         bus_manager.SerializeToOstream(&file);
     }
 
+    void RequestHandler::DeserializeFromFile(std::string_view file_name){
+
+        std::ifstream file(std::string(file_name), std::ios::binary);
+
+        DeseriallizeBusManager(db_, render_settings_, file);
+    }
+
     void RequestHandler::QueueAddRequest(base_request_t& request) {
 
         if (request.type == "Stop"){

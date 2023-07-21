@@ -47,17 +47,18 @@ int main(int argc, char* argv[]) {
 
         auto file_name = request_handler.ReadSerializationSettings(reader);
 
-        //TC::SeriallizeTC(catalogue, file_name);
+        request_handler.SerializeToFile(file_name);
 
     } else if (mode == "process_requests"sv) {
 
         TC::TransportCatalogue catalogue;
-        TC::RequestHandler request_handler(catalogue);
+        TC::MapRenderer renderer;
+        TC::RequestHandler request_handler(catalogue, &renderer);
         TC::Input::JSONReader reader(std::cin);
 
         auto file_name = request_handler.ReadSerializationSettings(reader);
 
-        TC::DeseriallizeTC(catalogue, file_name);
+        request_handler.DeserializeFromFile(file_name);
 
         request_handler.ReadStatRequests(std::cout, reader, json::Builder{});
 

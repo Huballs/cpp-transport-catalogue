@@ -4,19 +4,18 @@
     },
     "stat_requests": [
         {
-            "id": 1,
-            "name": "297",
-            "type": "Bus"
+            "id": 218563507,
+            "type": "Bus",
+            "name": "14"
         },
         {
-            "id": 2,
-            "name": "635",
-            "type": "Bus"
+            "id": 508658276,
+            "type": "Stop",
+            "name": "Электросети"
         },
         {
-            "id": 3,
-            "name": "Universam",
-            "type": "Stop"
+            "id": 1359372752,
+            "type": "Map"
         }
     ]
 }

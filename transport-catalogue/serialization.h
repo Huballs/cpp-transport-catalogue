@@ -11,5 +11,5 @@ namespace TC{
 
     TC_PROTO::TransportCatalogue* TransportCatalogueToProto(const TransportCatalogue& catalogue);
 
-    void DeseriallizeTC(TransportCatalogue& catalogue, std::string_view file_name);
+     void DeseriallizeBusManager(TransportCatalogue& catalogue, map_settings_t& render_settings, std::istream& in_stream);
 }

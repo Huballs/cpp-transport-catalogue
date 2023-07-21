@@ -63,6 +63,7 @@ class RequestHandler {
         std::vector<const Stop*> GetStopsAscendingName() const;
 
         void SerializeToFile(std::string_view file_name);
+        void DeserializeFromFile(std::string_view file_name);
 
         template <typename Array, typename Dict, typename Node>
         inline std::string_view ReadSerializationSettings(Reader<Array, Dict, Node>& reader);
