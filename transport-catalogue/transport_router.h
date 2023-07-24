@@ -10,7 +10,12 @@ namespace TC {
 class TransportRouter {
 
 public:
+
+    using Weight = size_t;
+
     TransportRouter(const TransportCatalogue& catalogue, routing_settings_t settings);
+
+    TransportRouter(const TransportCatalogue& catalogue) : catalogue_(catalogue){};
 
     enum class RouteLine_t{
         WAIT,
@@ -29,6 +34,14 @@ public:
         double total_time_min;
     };
 
+    struct EdgeInfo{
+        size_t bus_id;
+        size_t from;
+        size_t to;
+        size_t distance_m;
+        size_t span_count;
+    };
+
     std::optional<Travel> Route(std::string_view from, std::string_view to);
 
     // convert distance in meters to time traveled in minutes
@@ -36,15 +49,40 @@ public:
         return 1.0 * distance_m  / settings_.bus_velocity_kmh / distanceTimeMulti;
     }
 
-private:
+    const graph::DirectedWeightedGraph<Weight>& GetGraph() const{
+        return *graph_;
+    }
 
-    struct EdgeInfo{
-        std::string_view bus;
-        size_t from;
-        size_t to;
-        size_t distance_m;
-        size_t span_count;
-    };
+    const graph::Router<Weight>& GetRouter() const{
+        return *router_;
+    }
+
+    const routing_settings_t& GetSettings() const{
+        return settings_;
+    }
+
+    void SetGraph(std::unique_ptr<graph::DirectedWeightedGraph<Weight>>&& graph){
+        graph_ = std::move(graph);
+    }
+
+    void SetRouter(std::unique_ptr<graph::Router<Weight>>&& router){
+        router_ = std::move(router);
+    }
+
+    void SetSettings(routing_settings_t& settings){
+        settings_ = std::move(settings);
+        bus_wait_distance_ = 1.0 * settings_.bus_wait_time_min * settings_.bus_velocity_kmh * distanceTimeMulti;
+    }
+
+    const std::vector<EdgeInfo>& GetEdgeInfos() const{
+        return edge_infos_;
+    }
+
+    void SetEdgeInfos(std::vector<EdgeInfo>& edge_infos){
+        edge_infos_ = std::move(edge_infos);
+    }
+
+private:
 
     inline void StoreEdgeInfo(graph::EdgeId id, const EdgeInfo& info){
         if(id >= edge_infos_.size())
@@ -66,7 +104,7 @@ private:
                 graph::EdgeId edge_id = graph_->AddEdge({(*stop)->GetIndex(), (*stop2)->GetIndex(), distance + bus_wait_distance_});
 
                 EdgeInfo edge_info;
-                edge_info.bus = bus_name;
+                edge_info.bus_id = catalogue_.GetBus(bus_name)->GetIndex();
                 edge_info.from = (*stop)->GetIndex();
                 edge_info.to = (*stop2)->GetIndex();
                 edge_info.distance_m = distance;
@@ -79,8 +117,6 @@ private:
         }
     }
 
-    using Weight = size_t;
-
     const TransportCatalogue& catalogue_;
     std::unique_ptr<graph::DirectedWeightedGraph<Weight>> graph_;
     std::unique_ptr<graph::Router<Weight>> router_;
@@ -89,7 +125,7 @@ private:
 
     static constexpr double distanceTimeMulti = 1000.0/60.0; //(meters in km)/(minutes in h)
 
-    const size_t bus_wait_distance_ = 1.0 * settings_.bus_wait_time_min * settings_.bus_velocity_kmh * distanceTimeMulti;
+    size_t bus_wait_distance_;
 };
 
 } // namespace TC

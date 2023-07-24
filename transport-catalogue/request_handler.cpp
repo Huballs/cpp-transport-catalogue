@@ -7,11 +7,13 @@ namespace TC {
     void RequestHandler::SerializeToFile(std::string_view file_name){
         TC_PROTO::TransportCatalogue* proto_transport = TransportCatalogueToProto(db_);
         TC_PROTO::RenderSettings* proto_render_settings = RenderSettingsToProto(render_settings_);
+        TC_PROTO::TransportRouter* proto_router = TransportRouterToProto(*transport_router_);
 
         TC_PROTO::BusManager bus_manager;
 
         bus_manager.set_allocated_transport_catalogue(proto_transport);
         bus_manager.set_allocated_render_settings(proto_render_settings);
+        bus_manager.set_allocated_transport_router(proto_router);
 
         std::ofstream file(std::string(file_name), std::ios::binary);
 
@@ -22,7 +24,9 @@ namespace TC {
 
         std::ifstream file(std::string(file_name), std::ios::binary);
 
-        DeseriallizeBusManager(db_, render_settings_, file);
+        transport_router_ = std::make_unique<TransportRouter>(db_);
+
+        DeseriallizeBusManager(db_, render_settings_, *transport_router_, file);
     }
 
     void RequestHandler::QueueAddRequest(base_request_t& request) {

@@ -2,7 +2,9 @@
 
 namespace TC {
 
-    TransportRouter::TransportRouter(const TransportCatalogue& catalogue, routing_settings_t settings) : catalogue_(catalogue), settings_(std::move(settings)){
+    TransportRouter::TransportRouter(const TransportCatalogue& catalogue, routing_settings_t settings) : catalogue_(catalogue){
+
+        SetSettings(settings);
 
         graph_ = std::make_unique<graph::DirectedWeightedGraph<Weight>>();
 
@@ -63,7 +65,7 @@ namespace TC {
 
             line.type = RouteLine_t::BUS;
             line.time_min = DistanceToTime(edge_infos_[edgeID].distance_m);
-            line.name = edge_infos_[edgeID].bus;
+            line.name = (catalogue_.GetBuses()[edge_infos_[edgeID].bus_id]).GetName();
             line.span_count = edge_infos_[edgeID].span_count;
 
             travel.lines.push_back(std::move(line));

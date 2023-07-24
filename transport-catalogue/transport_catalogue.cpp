@@ -44,12 +44,14 @@ namespace TC {
         buses_.push_back(Bus((std::string(name))));
         Bus* bus = &buses_.back();
 
+        bus->index = buses_.size() - 1;
+
         std::unordered_set<std::string_view> unique_stops;
-        Stop * prev_stop = GetStopByIndex(stops[0]);//stopname_to_stops_[stops.first[0]];
+        Stop * prev_stop = GetStopByIndex(stops[0]);
         Coordinates prev_coordinate = prev_stop->coordinates;
 
         for (size_t stop_index : stops){
-            Stop * stored_stop = GetStopByIndex(stop_index);//stopname_to_stops_[stop];
+            Stop * stored_stop = GetStopByIndex(stop_index);
 
             bus->stops.push_back(stored_stop);
             unique_stops.insert(stored_stop->GetName());

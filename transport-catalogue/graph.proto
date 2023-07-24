@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package TC_PROTO;
+
+message Edge {
+    uint32 from = 1;
+    uint32 to = 2;
+    uint32 weight = 3;
+}
+
+message Graph {
+    repeated Edge edges = 1;
+}

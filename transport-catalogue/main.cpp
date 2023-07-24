@@ -1,18 +1,3 @@
-/*
-int main() {
-
-    TC::TransportCatalogue catalogue;
-    TC::MapRenderer renderer;
-
-    TC::RequestHandler request_handler(catalogue, renderer);
-
-    TC::Input::JSONReader reader(std::cin);
-    
-    request_handler.ReadRequests(std::cout, reader, json::Builder{});
-
-    return 0;
-}*/
-
 #include <fstream>
 #include <iostream>
 #include <string_view>
@@ -20,14 +5,12 @@ int main() {
 #include "json_reader.h"
 #include "request_handler.h"
 #include "json_builder.h"
-#include "serialization.h"
 
 using namespace std::literals;
 
 void PrintUsage(std::ostream& stream = std::cerr) {
     stream << "Usage: transport_catalogue [make_base|process_requests]\n"sv;
 }
-
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {

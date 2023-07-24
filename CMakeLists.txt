@@ -18,6 +18,8 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS
                         transport-catalogue/transport_catalogue.proto
                         transport-catalogue/map_renderer.proto
                         transport-catalogue/svg.proto
+                        transport-catalogue/graph.proto
+                        transport-catalogue/transport_router.proto
                         )
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")

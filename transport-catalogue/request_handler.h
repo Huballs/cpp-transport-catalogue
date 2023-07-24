@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <optional>
 #include <unordered_set>
 #include <map>
@@ -11,11 +10,7 @@
 #include "transport_catalogue.h"
 #include "transport_router.h"
 
-#include <iostream>
-
 namespace TC {
-
-#define READER_TYPENAMES typename Array, typename Dict, typename Node
 
 class RequestHandler {
     
@@ -76,6 +71,7 @@ class RequestHandler {
         TransportCatalogue& db_;
         Renderer *renderer_;
         map_settings_t render_settings_;
+        std::unique_ptr<TransportRouter> transport_router_;
 
         template <typename Array, typename Dict, typename Node>
         routing_settings_t ReadRoutingSettings(Reader<Array, Dict, Node>& reader);
@@ -170,7 +166,9 @@ void RequestHandler::ReadRequests(Reader<Array, Dict, Node>& reader){
 
     render_settings_ = ReadMapRenderSettings(reader);
 
-    //ReadStatRequests(output, reader, OutputBuilder{});
+    auto routing_settings = ReadRoutingSettings(reader);
+    transport_router_ = std::make_unique<TransportRouter>(db_, routing_settings);
+
 }
 
 template <typename Array, typename Dict, typename Node, typename OutputBuilder>
@@ -209,21 +207,14 @@ void RequestHandler::ReadStatRequests(std::ostream& output, Reader<Array, Dict, 
             }
         } else 
         if (reader.GetFieldAsString(request_node, "type") == "Map"){
-            //auto map_renderer_settings = ReadMapRenderSettings(reader);
             request_output = BuildMapStatNode<OutputBuilder>(request_id, render_settings_);
         } else 
         if (reader.GetFieldAsString(request_node, "type") == "Route"){
-            static std::optional<routing_settings_t> routing_settings;
-            static std::unique_ptr<TransportRouter> router;
-            if (!routing_settings){
-                routing_settings = ReadRoutingSettings(reader);
-                router = std::make_unique<TransportRouter>(db_, *routing_settings);
-            }
 
             const auto from = reader.GetFieldAsString(request_node, "from");
             const auto to = reader.GetFieldAsString(request_node, "to");
 
-            const auto route = router->Route(from, to);
+            const auto route = transport_router_->Route(from, to);
             if(route){
                 request_output = BuildRouteNode<OutputBuilder>(request_id, *route);
             } else{
@@ -245,7 +236,6 @@ std::string_view RequestHandler::ReadSerializationSettings(Reader<Array, Dict, N
     const auto& settings_map = reader.GetRequestNodesAsMap("serialization_settings");
 
     return reader.GetFieldAsString(settings_map, "file");
-
 }
 
 template <typename Array, typename Dict, typename Node>

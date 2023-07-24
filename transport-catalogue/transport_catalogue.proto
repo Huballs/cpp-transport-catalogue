@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "map_renderer.proto";
+import "transport_router.proto";
 
 package TC_PROTO;
 
@@ -33,4 +34,5 @@ message TransportCatalogue {
 message BusManager {
     TransportCatalogue transport_catalogue = 1;
     RenderSettings render_settings = 2;
+    TransportRouter transport_router = 3;
 }

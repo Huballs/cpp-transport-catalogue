@@ -163,6 +163,61 @@ namespace TC {
 
     }
 
+    TC_PROTO::TransportRouter* TransportRouterToProto(const TransportRouter& transport_router){
+        using namespace detail;
+
+        TC_PROTO::TransportRouter* proto_router = new TC_PROTO::TransportRouter();
+
+        proto_router->mutable_settings()->set_bus_velocity_kmh(transport_router.GetSettings().bus_velocity_kmh);
+        proto_router->mutable_settings()->set_bus_wait_time_min(transport_router.GetSettings().bus_wait_time_min);
+
+        for(const auto& edge : transport_router.GetGraph().GetEdges()){
+
+            TC_PROTO::Edge proto_edge;
+
+            proto_edge.set_from(edge.from);
+            proto_edge.set_to(edge.to);
+            proto_edge.set_weight(edge.weight);
+
+            proto_router->mutable_graph()->mutable_edges()->Add(std::move(proto_edge));
+        }
+
+        for(const auto& routes_internal_data : transport_router.GetRouter().GetRoutesInternalData()){
+            TC_PROTO::RouteInternalDataList proto_list;
+            for(const auto& route_data : routes_internal_data){
+                TC_PROTO::RouteInternalData proto_data;
+                if(route_data){
+                    proto_data.set_empty_data(false);
+                    proto_data.set_weight(route_data->weight);
+                    if(route_data->prev_edge){
+                        proto_data.set_empty_edge(false);
+                        proto_data.set_prev_edge(route_data->prev_edge.value());
+                    } else{
+                        proto_data.set_empty_edge(true);
+                    }
+                    proto_list.mutable_routes_internal_data_list();
+                } else {
+                    proto_data.set_empty_data(true);
+                }
+                proto_list.mutable_routes_internal_data_list()->Add(std::move(proto_data));
+            }
+            proto_router->mutable_routes_internal_data()->Add(std::move(proto_list));
+        }
+
+        for(const auto& edge_info : transport_router.GetEdgeInfos()){
+            TC_PROTO::EdgeInfo proto_edge_info;
+            proto_edge_info.set_bus_id(edge_info.bus_id);
+            proto_edge_info.set_distance_m(edge_info.distance_m);
+            proto_edge_info.set_from(edge_info.from);
+            proto_edge_info.set_to(edge_info.to);
+            proto_edge_info.set_span_count(edge_info.span_count);
+
+            proto_router->mutable_edge_infos()->Add(std::move(proto_edge_info));
+        }
+
+        return proto_router;
+    }
+
     void ProtoToTransportCatalogue(TransportCatalogue& catalogue, const TC_PROTO::TransportCatalogue& proto_catalogue){
         for(const auto& stop : proto_catalogue.stops()){
             catalogue.AddStop(stop.name(), {stop.latitude(), stop.longitude()});
@@ -207,7 +262,72 @@ namespace TC {
         }
     }
 
-    void DeseriallizeBusManager(TransportCatalogue& catalogue, map_settings_t& render_settings, std::istream& in_stream){
+    void ProtoToTransportRouter(TransportRouter& transport_router, const TC_PROTO::TransportRouter& proto_router){
+
+        auto graph = std::make_unique<graph::DirectedWeightedGraph<TransportRouter::Weight>>();
+
+        for(const auto& proto_edge : proto_router.graph().edges()){
+            graph::Edge<TransportRouter::Weight> edge;
+
+            edge.from = proto_edge.from();
+            edge.to = proto_edge.to();
+            edge.weight = proto_edge.weight();
+
+            graph->AddEdge(edge);
+        }
+
+        //auto router = std::make_unique<graph::Router<TransportRouter::Weight>>();
+
+        transport_router.SetGraph(std::move(graph));
+
+        graph::Router<TransportRouter::Weight>::RoutesInternalData router_data;
+
+        for(const auto& proto_data_list : proto_router.routes_internal_data()){
+            router_data.emplace_back();
+            for(const auto& proto_data : proto_data_list.routes_internal_data_list()){
+                graph::Router<TransportRouter::Weight>::RouteInternalData data;
+                if(proto_data.empty_data()){
+                    router_data.back().push_back(std::nullopt);  
+                } else{
+                    data.weight = proto_data.weight();
+                    if(proto_data.empty_edge()){
+                        data.prev_edge = std::nullopt;
+                    } else {
+                        data.prev_edge = proto_data.prev_edge();
+                    }
+                    router_data.back().push_back(std::move(data));
+                }
+                
+            }
+        }
+
+        auto router = std::make_unique<graph::Router<TransportRouter::Weight>>(transport_router.GetGraph(), router_data);
+        
+        transport_router.SetRouter(std::move(router));
+
+        routing_settings_t settings;
+        settings.bus_velocity_kmh = proto_router.settings().bus_velocity_kmh();
+        settings.bus_wait_time_min = proto_router.settings().bus_wait_time_min();
+
+        transport_router.SetSettings(settings);
+
+        std::vector<TransportRouter::EdgeInfo> edge_infos;
+        edge_infos.reserve(proto_router.edge_infos_size());
+
+        for(const auto& proto_edge_info : proto_router.edge_infos()){
+            TransportRouter::EdgeInfo edge_info;
+            edge_info.bus_id = proto_edge_info.bus_id();
+            edge_info.distance_m = proto_edge_info.distance_m();
+            edge_info.from = proto_edge_info.from();
+            edge_info.to = proto_edge_info.to();
+            edge_info.span_count = proto_edge_info.span_count();
+            edge_infos.push_back(std::move(edge_info));
+        }
+
+        transport_router.SetEdgeInfos(edge_infos);
+    }
+
+    void DeseriallizeBusManager(TransportCatalogue& catalogue, map_settings_t& render_settings, TransportRouter& transport_router, std::istream& in_stream){
         
         TC_PROTO::BusManager bus_manager;
 
@@ -215,7 +335,7 @@ namespace TC {
 
         ProtoToTransportCatalogue(catalogue,  bus_manager.transport_catalogue());
         ProtoToRenderSettings(render_settings, bus_manager.render_settings());
-        
+        ProtoToTransportRouter(transport_router, bus_manager.transport_router());
     }
 
 }

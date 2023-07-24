@@ -47,6 +47,8 @@ namespace TC {
 
         bool isCircle = false;
 
+        uint32_t index;
+
     public:
         explicit Bus(const std::string& _name) : name(_name){};
 
@@ -59,6 +61,7 @@ namespace TC {
         int GetStopsCountUnique() const {return stops_unique_count;}
         bool IsCircular() const {return isCircle;}
         const std::deque<Stop*>& GetStops() const {return stops;}
+        uint32_t GetIndex() const {return index;}
     };
 
     class TransportCatalogue {

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+import "graph.proto";
+
+package TC_PROTO;
+
+message Settings {
+    uint32 bus_velocity_kmh = 1;
+    uint32 bus_wait_time_min = 2;
+}
+
+message RouteInternalData{
+    uint32 weight = 1;
+    uint32 prev_edge = 2;
+    bool empty_edge = 3;
+    bool empty_data = 4;
+}
+
+message RouteInternalDataList {
+    repeated RouteInternalData routes_internal_data_list = 1;
+}
+
+message EdgeInfo {
+    uint32 bus_id = 1;
+    uint32 from = 2;
+    uint32 to = 3;
+    uint32 distance_m = 4;
+    uint32 span_count = 5;
+}
+
+message TransportRouter {
+    Settings settings = 1;
+    Graph graph = 2;
+    repeated RouteInternalDataList routes_internal_data = 3;
+    repeated EdgeInfo edge_infos = 4;
+}
